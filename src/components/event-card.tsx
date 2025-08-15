@@ -3,12 +3,22 @@ import { Film, Tv, Clock } from 'lucide-react';
 import type { Event } from '@/lib/events';
 import { Card } from '@/components/ui/card';
 
-export default function EventCard({ event }: { event: Event }) {
+interface EventCardProps {
+  event: Event;
+  onClick?: () => void;
+}
+
+export default function EventCard({ event, onClick }: EventCardProps) {
   const isMovie = !event.episode;
   const eventDate = new Date(event.dateTime);
 
+  const cardProps = {
+    className: "bg-card border-border/50 p-4 transition-transform hover:scale-[1.02] hover:shadow-lg flex gap-4 items-start",
+    ...(onClick && { onClick, role: 'button', tabIndex: 0 }),
+  };
+
   return (
-    <Card className="bg-card border-border/50 p-4 transition-transform hover:scale-[1.02] hover:shadow-lg flex gap-4 items-start">
+    <Card {...cardProps}>
       <div className="relative w-20 h-28 flex-shrink-0 rounded-md overflow-hidden">
         <Image
           src={event.posterUrl}
