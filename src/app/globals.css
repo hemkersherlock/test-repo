@@ -4,11 +4,11 @@
 
 @layer base {
   :root {
-    --background: 356 47% 89%; /* #F1D5D7 */
+    --background: 356 47% 95%; /* Lighter version of #F1D5D7 */
     --foreground: 356 50% 10%;
-    --card: 356 50% 95%;
+    --card: 356 47% 98%; /* Even lighter for cards */
     --card-foreground: 356 50% 10%;
-    --popover: 356 50% 95%;
+    --popover: 356 47% 98%;
     --popover-foreground: 356 50% 10%;
     --primary: 356 78% 56%; /* #E63946 */
     --primary-foreground: 0 0% 100%;
@@ -20,8 +20,8 @@
     --accent-foreground: 181 33% 20%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 356 40% 80%;
-    --input: 356 40% 85%;
+    --border: 356 40% 90%;
+    --input: 356 40% 92%;
     --ring: 356 78% 56%;
     --radius: 0.75rem;
   }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -68,6 +69,15 @@ export default function CalendarView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
 
+  const selectedDateEvents = mockEvents.filter(event => {
+    if (!date) return true;
+    const eventDate = new Date(event.dateTime);
+    return eventDate.getDate() === date.getDate() &&
+           eventDate.getMonth() === date.getMonth() &&
+           eventDate.getFullYear() === date.getFullYear();
+  }).sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+
+
   return (
     <div className="relative min-h-screen flex flex-col">
       <header className="p-4 border-b sticky top-0 bg-card/80 backdrop-blur-sm z-10">
@@ -83,12 +93,18 @@ export default function CalendarView() {
         />
       </div>
 
-      <h2 className="text-xl font-headline font-semibold px-4 pb-2">Upcoming</h2>
+      <h2 className="text-xl font-headline font-semibold px-4 pb-2">
+        Schedule for {date ? format(date, "PPP") : '...'}
+      </h2>
       <ScrollArea className="flex-grow px-4">
         <div className="space-y-4 pb-24">
-          {mockEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
+          {selectedDateEvents.length > 0 ? (
+            selectedDateEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))
+          ) : (
+             <p className="text-muted-foreground text-center py-8">No events scheduled for this day.</p>
+          )}
         </div>
       </ScrollArea>
       
