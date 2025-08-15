@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { format as formatDate, isSameDay, startOfDay } from "date-fns";
 import { DayPicker } from "react-day-picker";
@@ -23,10 +24,27 @@ export default function CalendarView() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    // Process events on the client to avoid hydration issues
+    const today = new Date();
+    const addDays = (date: Date, days: number) => {
+      const result = new Date(date);
+      result.setDate(result.getDate() + days);
+      return result;
+    };
+
+    const processedEvents = mockEvents.map(event => ({
+      ...event,
+      dateTime: addDays(today, event.dayOffset).toISOString()
+    }));
+    setEvents(processedEvents);
+  }, []);
 
   const eventsByDate = useMemo(() => {
     const map = new Map<number, Event[]>();
-    mockEvents.forEach(event => {
+    events.forEach(event => {
       const day = startOfDay(new Date(event.dateTime)).getTime();
       if (!map.has(day)) {
         map.set(day, []);
@@ -34,7 +52,7 @@ export default function CalendarView() {
       map.get(day)!.push(event);
     });
     return map;
-  }, []);
+  }, [events]);
 
   const eventDays = useMemo(() => {
     return Array.from(eventsByDate.keys()).map(time => new Date(time));

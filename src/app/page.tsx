@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EventCard from "@/components/event-card";
 import { mockEvents, Event } from "@/lib/events";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,6 +10,23 @@ import AddShowModal from "@/components/add-show-modal";
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    // Process events on the client to avoid hydration issues
+    const today = new Date();
+    const addDays = (date: Date, days: number) => {
+      const result = new Date(date);
+      result.setDate(result.getDate() + days);
+      return result;
+    };
+
+    const processedEvents = mockEvents.map(event => ({
+      ...event,
+      dateTime: addDays(today, event.dayOffset).toISOString()
+    }));
+    setEvents(processedEvents);
+  }, []);
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
@@ -20,7 +38,7 @@ export default function Home() {
     setSelectedEvent(null);
   };
 
-  const upcomingEvents = mockEvents
+  const upcomingEvents = events
     .filter(event => new Date(event.dateTime) >= new Date())
     .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
 
