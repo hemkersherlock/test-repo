@@ -17,7 +17,7 @@ export const mockEvents: Omit<Event, 'dateTime'>[] = [
     episode: "S04E01: The Hellfire Club",
     dayOffset: 1,
     notes: "Watch party with friends!",
-    posterUrl: "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
+    posterUrl: "https://image.tmdb.org/t/p/w500/56v2KjBlU4KZQl6seS8S8erBsBI.jpg",
     aiHint: "sci-fi series"
   },
   {
