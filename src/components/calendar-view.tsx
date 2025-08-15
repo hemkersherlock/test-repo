@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
-import { format, isSameDay, startOfDay } from "date-fns";
+import { format as formatDate, isSameDay, startOfDay } from "date-fns";
 import { DayPicker } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
@@ -67,10 +67,10 @@ export default function CalendarView() {
           modifiers={{ hasEvent: eventDays }}
           modifiersClassNames={{ hasEvent: "has-event" }}
           showOutsideDays
-          className="rounded-md"
+          className="rounded-md w-full"
           classNames={{
             months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-            month: "space-y-4",
+            month: "space-y-4 w-full",
             caption: "flex justify-center pt-1 relative items-center",
             caption_label: "text-base font-medium",
             nav: "space-x-1 flex items-center",
@@ -81,10 +81,10 @@ export default function CalendarView() {
             nav_button_previous: "absolute left-1",
             nav_button_next: "absolute right-1",
             table: "w-full border-collapse space-y-1",
-            head_row: "flex",
+            head_row: "flex justify-around",
             head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.8rem]",
-            row: "flex w-full mt-2",
-            cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+            row: "flex w-full mt-2 justify-around",
+            cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
             day: cn(
               buttonVariants({ variant: "ghost" }),
               "h-10 w-10 p-0 font-normal aria-selected:opacity-100"
@@ -102,7 +102,7 @@ export default function CalendarView() {
               const hasEvent = eventDays.some(eventDate => isSameDay(eventDate, date));
               return (
                 <div className="relative h-full w-full flex items-center justify-center">
-                  <span>{format(date, "d")}</span>
+                  <span>{formatDate(date, "d")}</span>
                   {hasEvent && <EventIndicator />}
                 </div>
               );
@@ -112,7 +112,7 @@ export default function CalendarView() {
       </div>
       
       <h2 className="text-xl font-headline font-semibold px-4 pb-2 border-t border-border pt-4">
-        Schedule for {date ? format(date, "PPP") : '...'}
+        Schedule for {date ? formatDate(date, "PPP") : '...'}
       </h2>
 
       <ScrollArea className="flex-grow px-4">
