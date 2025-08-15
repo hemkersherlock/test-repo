@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { Film, Tv, Clock } from 'lucide-react';
-import type { Event } from './calendar-view';
+import type { Event } from '@/lib/events';
 import { Card } from '@/components/ui/card';
 
 export default function EventCard({ event }: { event: Event }) {
