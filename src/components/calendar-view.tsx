@@ -2,14 +2,12 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Plus } from "lucide-react";
 import { format as formatDate, isSameDay, startOfDay } from "date-fns";
 import { DayPicker } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EventCard from "@/components/event-card";
-import AddShowModal from "@/components/add-show-modal";
 import type { Event } from "@/lib/events";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -20,14 +18,15 @@ function EventIndicator() {
 }
 
 export default function CalendarView() {
-  const { events } = useEvents();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const { events, setSelectedEvent, setIsModalOpen } = useEvents();
   const [date, setDate] = useState<Date | undefined>();
 
   useEffect(() => {
-    setDate(new Date());
-  }, []);
+    // Set initial date only on the client to avoid hydration mismatch
+    if (!date) {
+      setDate(new Date());
+    }
+  }, [date]);
 
   const eventsByDate = useMemo(() => {
     const map = new Map<number, Event[]>();
@@ -58,10 +57,10 @@ export default function CalendarView() {
     setIsModalOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedEvent(null);
-  };
+  if (!date) {
+    // Render nothing or a loading spinner on the server and initial client render
+    return null;
+  }
 
   return (
     <>
@@ -121,7 +120,7 @@ export default function CalendarView() {
         </div>
         
         <h2 className="text-xl font-headline font-semibold px-4 pb-2 border-t border-border pt-4">
-          Schedule for {date ? formatDate(date, "PPP") : '...'}
+          Schedule for {formatDate(date, "PPP")}
         </h2>
 
         <ScrollArea className="flex-grow px-4">
@@ -138,17 +137,6 @@ export default function CalendarView() {
             )}
           </div>
         </ScrollArea>
-        
-        <Button
-          className="fixed bottom-24 right-6 h-16 w-16 rounded-full shadow-lg z-40 bg-primary hover:bg-primary/90"
-          size="icon"
-          onClick={openAddModal}
-          aria-label="Add new show"
-        >
-          <Plus className="h-8 w-8" />
-        </Button>
-
-        <AddShowModal isOpen={isModalOpen} onClose={closeModal} eventToEdit={selectedEvent} />
       </div>
     </>
   );

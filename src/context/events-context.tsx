@@ -1,7 +1,7 @@
 
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
 import type { Event } from '@/lib/events';
 import { mockEvents } from '@/lib/events';
 
@@ -10,16 +10,21 @@ interface EventsContextType {
   addEvent: (event: Omit<Event, 'id'>) => void;
   updateEvent: (event: Event) => void;
   deleteEvent: (id: number) => void;
+  isModalOpen: boolean;
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
+  selectedEvent: Event | null;
+  setSelectedEvent: Dispatch<SetStateAction<Event | null>>;
 }
 
 const EventsContext = createContext<EventsContextType | undefined>(undefined);
 
 export function EventsProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   useEffect(() => {
     // This code runs only on the client, after the component has mounted.
-    // This prevents hydration errors by ensuring dates are generated client-side.
     const today = new Date();
     const addDays = (date: Date, days: number) => {
       const result = new Date(date);
@@ -47,8 +52,19 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     setEvents(prevEvents => prevEvents.filter(event => event.id !== id));
   };
 
+  const contextValue = {
+    events,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    isModalOpen,
+    setIsModalOpen,
+    selectedEvent,
+    setSelectedEvent
+  };
+
   return (
-    <EventsContext.Provider value={{ events, addEvent, updateEvent, deleteEvent }}>
+    <EventsContext.Provider value={contextValue}>
       {children}
     </EventsContext.Provider>
   );

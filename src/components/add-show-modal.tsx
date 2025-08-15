@@ -26,19 +26,19 @@ import { debounce } from "lodash";
 import Image from "next/image";
 import { useEvents } from "@/context/events-context";
 
-interface AddShowModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  eventToEdit?: Event | null;
-}
-
-type EventType = "movie" | "show";
-
-export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowModalProps) {
-  const { addEvent, updateEvent } = useEvents();
+export default function AddShowModal() {
+  const { 
+    addEvent, 
+    updateEvent, 
+    isModalOpen, 
+    setIsModalOpen, 
+    selectedEvent, 
+    setSelectedEvent 
+  } = useEvents();
 
   const [title, setTitle] = useState('');
-  const [type, setType] = useState<EventType>('movie');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [type, setType] = useState<'movie' | 'show'>('movie');
   const [season, setSeason] = useState('');
   const [episode, setEpisode] = useState('');
   const [date, setDate] = useState<Date | undefined>();
@@ -49,7 +49,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
   const [searchResults, setSearchResults] = useState<TMDbResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
-  const isEditMode = !!eventToEdit;
+  const isEditMode = !!selectedEvent;
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
@@ -66,22 +66,36 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
   );
 
   useEffect(() => {
-    debouncedSearch(title);
-  }, [title, debouncedSearch]);
+    debouncedSearch(searchQuery);
+  }, [searchQuery, debouncedSearch]);
 
+
+  const resetForm = () => {
+    setTitle('');
+    setSearchQuery('');
+    setType('movie');
+    setSeason('');
+    setEpisode('');
+    setDate(new Date());
+    setTime(formatDate(new Date(), 'HH:mm'));
+    setNotes('');
+    setPosterUrl('');
+    setSearchResults([]);
+  };
 
   useEffect(() => {
-    if (isOpen) {
-      if (eventToEdit) {
-        const eventDate = eventToEdit.dateTime ? new Date(eventToEdit.dateTime) : new Date();
-        const isShow = !!eventToEdit.episode;
+    if (isModalOpen) {
+      if (selectedEvent) {
+        const eventDate = selectedEvent.dateTime ? new Date(selectedEvent.dateTime) : new Date();
+        const isShow = !!selectedEvent.episode;
         
-        setTitle(eventToEdit.title || '');
-        setPosterUrl(eventToEdit.posterUrl || 'https://placehold.co/200x300.png');
+        setTitle(selectedEvent.title || '');
+        setSearchQuery(selectedEvent.title || '');
+        setPosterUrl(selectedEvent.posterUrl || 'https://placehold.co/200x300.png');
         setType(isShow ? 'show' : 'movie');
         
-        if (isShow && eventToEdit.episode) {
-            const match = eventToEdit.episode.match(/S(\d+)E(\d+)/);
+        if (isShow && selectedEvent.episode) {
+            const match = selectedEvent.episode.match(/S(\d+)E(\d+)/);
             if (match) {
                 setSeason(match[1]);
                 setEpisode(match[2]);
@@ -93,25 +107,18 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
 
         setDate(eventDate);
         setTime(formatDate(eventDate, 'HH:mm'));
-        setNotes(eventToEdit.notes || '');
+        setNotes(selectedEvent.notes || '');
       } else {
-        // Reset form for "add" mode
-        setTitle('');
-        setType('movie');
-        setSeason('');
-        setEpisode('');
-        setDate(new Date());
-        setTime(formatDate(new Date(), 'HH:mm'));
-        setNotes('');
-        setPosterUrl('');
+        resetForm();
       }
-      setSearchResults([]);
     }
-  }, [eventToEdit, isOpen]);
+  }, [selectedEvent, isModalOpen]);
 
   const handleSelectResult = (result: TMDbResult) => {
     const isShow = result.media_type === 'tv';
-    setTitle(isShow ? result.name : result.title);
+    const resultTitle = isShow ? result.name : result.title;
+    setTitle(resultTitle);
+    setSearchQuery(resultTitle)
     setPosterUrl(result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}`: 'https://placehold.co/200x300.png');
     setType(isShow ? 'show' : 'movie');
     setSearchResults([]);
@@ -134,21 +141,26 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
       dateTime: combinedDateTime.toISOString(),
       notes,
       aiHint: type === 'show' ? 'series' : 'movie',
-      ...(type === 'show' && { episode: `S${season.padStart(2, '0')}E${episode.padStart(2, '0')}` }),
+      ...(type === 'show' && { episode: `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}` }),
     };
 
-    if (isEditMode && eventToEdit) {
-      updateEvent({ ...eventData, id: eventToEdit.id, dayOffset: 0 });
+    if (isEditMode && selectedEvent) {
+      updateEvent({ ...eventData, id: selectedEvent.id, dayOffset: 0 });
     } else {
       addEvent({ ...eventData, dayOffset: 0});
     }
 
-    onClose();
+    setIsModalOpen(false);
+  };
+  
+  const handleClose = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
   };
 
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isModalOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="font-headline">
@@ -163,7 +175,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
             <Label htmlFor="title">Search by name</Label>
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input id="title" placeholder={'e.g., Blade Runner 2049'} value={title} onChange={(e) => setTitle(e.target.value)} autoComplete="off" className="pl-10" />
+                <Input id="title" placeholder={'e.g., Blade Runner 2049'} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoComplete="off" className="pl-10" />
             </div>
             {searchResults.length > 0 && (
               <div className="absolute top-full mt-1 w-full z-50 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -242,7 +254,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">
+            <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
           </DialogClose>

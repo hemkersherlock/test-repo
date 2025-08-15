@@ -1,5 +1,14 @@
-import CalendarPageClient from "@/components/calendar-page-client";
+
+"use client"
+
+import CalendarView from "@/components/calendar-view";
 
 export default function CalendarPage() {
-  return <CalendarPageClient />;
+  return (
+    <main className="flex justify-center bg-background min-h-full">
+      <div className="w-full max-w-lg">
+        <CalendarView />
+      </div>
+    </main>
+  );
 }
