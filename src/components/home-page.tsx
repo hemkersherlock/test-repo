@@ -8,11 +8,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import AddShowModal from "@/components/add-show-modal";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SearchOverlay } from "@/app/search/page";
 
 export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     // Process events on the client to avoid hydration issues
@@ -32,11 +34,6 @@ export default function HomePage() {
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
-    setIsModalOpen(true);
-  };
-
-  const openAddModal = () => {
-    setSelectedEvent(null);
     setIsModalOpen(true);
   };
 
@@ -75,12 +72,13 @@ export default function HomePage() {
        <Button
         className="fixed bottom-24 right-6 h-16 w-16 rounded-full shadow-lg z-40 bg-primary hover:bg-primary/90"
         size="icon"
-        onClick={openAddModal}
+        onClick={() => setIsSearchOpen(true)}
         aria-label="Add new show"
       >
         <Plus className="h-8 w-8" />
       </Button>
       <AddShowModal isOpen={isModalOpen} onClose={closeModal} eventToEdit={selectedEvent} />
+      {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
     </>
   );
 }
