@@ -33,7 +33,7 @@ export const mockEvents: Omit<Event, 'dateTime'>[] = [
     title: "The Bear",
     episode: "S02E05: Pop",
     dayOffset: 4,
-    posterUrl: "https://image.tmdb.org/t/p/w500/6eNqTkrSVaD63oYn4a8u hedon.jpg",
+    posterUrl: "https://image.tmdb.org/t/p/w500/6eNqTkrSVaD63oYn4a8u_hedon.jpg",
     aiHint: "chef kitchen"
   },
   {
