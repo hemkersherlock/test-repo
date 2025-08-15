@@ -13,10 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Calendar as CalendarIcon, Clock } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
-import { format as formatDate, parse } from "date-fns";
+import { format as formatDate } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import type { Event } from "@/lib/events";
@@ -27,8 +27,12 @@ interface AddShowModalProps {
   eventToEdit?: Event | null;
 }
 
+type EventType = "movie" | "show";
+
 export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowModalProps) {
   const [title, setTitle] = useState('');
+  const [type, setType] = useState<EventType>('movie');
+  const [season, setSeason] = useState('');
   const [episode, setEpisode] = useState('');
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState('');
@@ -37,20 +41,38 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
   const isEditMode = !!eventToEdit;
 
   useEffect(() => {
-    if (isEditMode) {
-      const eventDate = new Date(eventToEdit.dateTime);
-      setTitle(eventToEdit.title);
-      setEpisode(eventToEdit.episode || '');
-      setDate(eventDate);
-      setTime(formatDate(eventDate, 'HH:mm'));
-      setNotes(eventToEdit.notes || '');
-    } else {
-      // Reset form for "add" mode
-      setTitle('');
-      setEpisode('');
-      setDate(new Date());
-      setTime(formatDate(new Date(), 'HH:mm'));
-      setNotes('');
+    if (isOpen) {
+      if (isEditMode && eventToEdit) {
+        const eventDate = new Date(eventToEdit.dateTime);
+        const isShow = !!eventToEdit.episode;
+        
+        setTitle(eventToEdit.title);
+        setType(isShow ? 'show' : 'movie');
+        
+        if (isShow && eventToEdit.episode) {
+            const match = eventToEdit.episode.match(/S(\d+)E(\d+)/);
+            if (match) {
+                setSeason(match[1]);
+                setEpisode(match[2]);
+            }
+        } else {
+            setSeason('');
+            setEpisode('');
+        }
+
+        setDate(eventDate);
+        setTime(formatDate(eventDate, 'HH:mm'));
+        setNotes(eventToEdit.notes || '');
+      } else {
+        // Reset form for "add" mode
+        setTitle('');
+        setType('movie');
+        setSeason('');
+        setEpisode('');
+        setDate(new Date());
+        setTime(formatDate(new Date(), 'HH:mm'));
+        setNotes('');
+      }
     }
   }, [eventToEdit, isEditMode, isOpen]);
 
@@ -60,7 +82,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="font-headline">
-            {isEditMode ? "Edit Movie/Show" : "Add Movie/Show"}
+            {isEditMode ? "Edit Schedule" : "Add to Schedule"}
           </DialogTitle>
           <DialogDescription>
             {isEditMode ? "Update the details for your scheduled event." : "Schedule a new movie or show to watch."}
@@ -68,13 +90,31 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid w-full gap-1.5">
-            <Label htmlFor="title">Movie/Show name</Label>
-            <Input id="title" placeholder="e.g., Blade Runner 2049" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Label>Type</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant={type === 'movie' ? 'default' : 'outline'} onClick={() => setType('movie')}>Movie</Button>
+              <Button variant={type === 'show' ? 'default' : 'outline'} onClick={() => setType('show')}>Show</Button>
+            </div>
           </div>
+
           <div className="grid w-full gap-1.5">
-            <Label htmlFor="episode">Season/Episode (optional)</Label>
-            <Input id="episode" placeholder="e.g., S01E01" value={episode} onChange={(e) => setEpisode(e.target.value)} />
+            <Label htmlFor="title">{type === 'movie' ? 'Movie' : 'Show'} name</Label>
+            <Input id="title" placeholder={type === 'movie' ? 'e.g., Blade Runner 2049' : 'e.g., Stranger Things'} value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
+
+          {type === 'show' && (
+            <div className="grid grid-cols-2 gap-4">
+               <div className="grid w-full gap-1.5">
+                <Label htmlFor="season">Season number</Label>
+                <Input id="season" type="number" placeholder="e.g., 1" value={season} onChange={(e) => setSeason(e.target.value)} />
+              </div>
+              <div className="grid w-full gap-1.5">
+                <Label htmlFor="episode">Episode number</Label>
+                <Input id="episode" type="number" placeholder="e.g., 1" value={episode} onChange={(e) => setEpisode(e.target.value)} />
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="grid w-full gap-1.5">
               <Label htmlFor="date">Date</Label>
@@ -118,7 +158,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
             </Button>
           </DialogClose>
           <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">
-            {isEditMode ? "Save Changes" : "Add Show"}
+            {isEditMode ? "Save Changes" : "Add to Schedule"}
           </Button>
         </DialogFooter>
       </DialogContent>
