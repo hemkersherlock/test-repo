@@ -1,26 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, startOfDay } from "date-fns";
+import { DayPicker } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EventCard from "@/components/event-card";
 import AddShowModal from "@/components/add-show-modal";
-import { mockEvents } from "@/lib/events";
+import { mockEvents, Event } from "@/lib/events";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
+function EventIndicator() {
+  return <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary" />;
+}
 
 export default function CalendarView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
   const [date, setDate] = useState<Date | undefined>(new Date());
 
-  const selectedDateEvents = mockEvents.filter(event => {
-    if (!date) return true;
-    return isSameDay(new Date(event.dateTime), date);
-  }).sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+  const eventsByDate = useMemo(() => {
+    const map = new Map<number, Event[]>();
+    mockEvents.forEach(event => {
+      const day = startOfDay(new Date(event.dateTime)).getTime();
+      if (!map.has(day)) {
+        map.set(day, []);
+      }
+      map.get(day)!.push(event);
+    });
+    return map;
+  }, []);
 
+  const eventDays = useMemo(() => {
+    return Array.from(eventsByDate.keys()).map(time => new Date(time));
+  }, [eventsByDate]);
+  
+  const selectedDateEvents = date ? eventsByDate.get(startOfDay(date).getTime()) || [] : [];
+  selectedDateEvents.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+
+  const handleEventClick = (event: Event) => {
+    setSelectedEvent(event);
+    setIsEventModalOpen(true);
+  };
+
+  const closeEventModal = () => {
+    setIsEventModalOpen(false);
+    setSelectedEvent(null);
+  };
 
   return (
     <div className="relative min-h-full flex flex-col">
@@ -29,26 +60,66 @@ export default function CalendarView() {
       </header>
       
       <div className="p-4 flex justify-center">
-        <Calendar
+         <DayPicker
           mode="single"
           selected={date}
           onSelect={setDate}
-          className="rounded-md border-0"
+          modifiers={{ hasEvent: eventDays }}
+          modifiersClassNames={{ hasEvent: "has-event" }}
+          showOutsideDays
+          className="rounded-md"
+          classNames={{
+            months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+            month: "space-y-4",
+            caption: "flex justify-center pt-1 relative items-center",
+            caption_label: "text-base font-medium",
+            nav: "space-x-1 flex items-center",
+            nav_button: cn(
+              buttonVariants({ variant: "outline" }),
+              "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+            ),
+            nav_button_previous: "absolute left-1",
+            nav_button_next: "absolute right-1",
+            table: "w-full border-collapse space-y-1",
+            head_row: "flex",
+            head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.8rem]",
+            row: "flex w-full mt-2",
+            cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+            day: cn(
+              buttonVariants({ variant: "ghost" }),
+              "h-10 w-10 p-0 font-normal aria-selected:opacity-100"
+            ),
+            day_range_end: "day-range-end",
+            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+            day_today: "bg-accent text-accent-foreground",
+            day_outside: "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
+            day_disabled: "text-muted-foreground opacity-50",
+            day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+            day_hidden: "invisible",
+          }}
+          components={{
+            DayContent: ({ date, ...props }) => {
+              const hasEvent = eventDays.some(eventDate => isSameDay(eventDate, date));
+              return (
+                <div className="relative h-full w-full flex items-center justify-center">
+                  <span>{format(date, "d")}</span>
+                  {hasEvent && <EventIndicator />}
+                </div>
+              );
+            },
+          }}
         />
       </div>
       
-      <div className="px-4 pb-2">
-        <div className="border-t border-border -mx-4"></div>
-      </div>
-
-      <h2 className="text-xl font-headline font-semibold px-4 pb-2">
+      <h2 className="text-xl font-headline font-semibold px-4 pb-2 border-t border-border pt-4">
         Schedule for {date ? format(date, "PPP") : '...'}
       </h2>
+
       <ScrollArea className="flex-grow px-4">
         <div className="space-y-4 pb-24">
           {selectedDateEvents.length > 0 ? (
             selectedDateEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
+              <EventCard key={event.id} event={event} onClick={() => handleEventClick(event)} />
             ))
           ) : (
              <div className="text-center py-16">
@@ -69,6 +140,7 @@ export default function CalendarView() {
       </Button>
 
       <AddShowModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AddShowModal isOpen={isEventModalOpen} onClose={closeEventModal} eventToEdit={selectedEvent} />
     </div>
   );
 }
