@@ -1,3 +1,7 @@
+
+"use client";
+
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Film, Tv, Clock } from 'lucide-react';
 import type { Event } from '@/lib/events';
@@ -9,8 +13,21 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, onClick }: EventCardProps) {
+  const [formattedTime, setFormattedTime] = useState('');
+
+  useEffect(() => {
+    // This code runs only on the client, after the component has mounted.
+    const eventDate = new Date(event.dateTime);
+    setFormattedTime(
+      eventDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      })
+    );
+  }, [event.dateTime]);
+
   const isMovie = !event.episode;
-  const eventDate = new Date(event.dateTime);
 
   const cardProps = {
     className: "bg-card border-border/50 p-4 transition-transform hover:scale-[1.02] hover:shadow-lg flex gap-4 items-start",
@@ -40,9 +57,9 @@ export default function EventCard({ event, onClick }: EventCardProps) {
           </div>
         </div>
         <div className="mt-2 pt-2 border-t border-dashed border-border/50">
-           <p className="text-sm font-semibold text-primary flex items-center gap-2">
+           <p className="text-sm font-semibold text-primary flex items-center gap-2 h-5">
             <Clock className="h-4 w-4" />
-            {eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+            {formattedTime}
           </p>
           {event.notes && (
             <p className="text-xs text-muted-foreground mt-2">
