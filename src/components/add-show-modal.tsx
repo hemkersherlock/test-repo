@@ -45,8 +45,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
 
   const [searchResults, setSearchResults] = useState<TMDbResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
+  
   const isEditMode = !!(eventToEdit && 'id' in eventToEdit);
 
   const debouncedSearch = useCallback(
@@ -64,22 +63,21 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
   );
 
   useEffect(() => {
-    debouncedSearch(searchQuery);
-  }, [searchQuery, debouncedSearch]);
+    debouncedSearch(title);
+  }, [title, debouncedSearch]);
 
 
   useEffect(() => {
     if (isOpen) {
       if (eventToEdit) {
         const eventDate = ('dateTime' in eventToEdit && eventToEdit.dateTime) ? new Date(eventToEdit.dateTime) : new Date();
-        const isShow = 'episode' in eventToEdit && !!eventToEdit.episode;
+        const isShow = ('episode' in eventToEdit && !!eventToEdit.episode) || eventToEdit.aiHint?.includes('series');
         
         setTitle(eventToEdit.title || '');
-        setSearchQuery(eventToEdit.title || '');
         setPosterUrl(eventToEdit.posterUrl || 'https://placehold.co/200x300.png');
         setType(isShow ? 'show' : 'movie');
         
-        if (isShow && eventToEdit.episode) {
+        if (isShow && 'episode' in eventToEdit && eventToEdit.episode) {
             const match = eventToEdit.episode.match(/S(\d+)E(\d+)/);
             if (match) {
                 setSeason(match[1]);
@@ -103,7 +101,6 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
         setTime(formatDate(new Date(), 'HH:mm'));
         setNotes('');
         setPosterUrl('');
-        setSearchQuery('');
       }
       setSearchResults([]);
     }
@@ -112,8 +109,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
   const handleSelectResult = (result: TMDbResult) => {
     const isShow = result.media_type === 'tv';
     setTitle(isShow ? result.name : result.title);
-    setSearchQuery(isShow ? result.name : result.title);
-    setPosterUrl(`https://image.tmdb.org/t/p/w500${result.poster_path}`);
+    setPosterUrl(result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}`: 'https://placehold.co/200x300.png');
     setType(isShow ? 'show' : 'movie');
     setSearchResults([]);
   };
@@ -134,7 +130,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
             <Label htmlFor="title">Search by name</Label>
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input id="title" placeholder={'e.g., Blade Runner 2049'} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoComplete="off" />
+                <Input id="title" placeholder={'e.g., Blade Runner 2049'} value={title} onChange={(e) => setTitle(e.target.value)} autoComplete="off" />
             </div>
             {searchResults.length > 0 && (
               <div className="absolute top-full mt-1 w-full z-50 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
