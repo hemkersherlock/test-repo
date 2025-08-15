@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -71,17 +71,14 @@ export default function CalendarView() {
 
   const selectedDateEvents = mockEvents.filter(event => {
     if (!date) return true;
-    const eventDate = new Date(event.dateTime);
-    return eventDate.getDate() === date.getDate() &&
-           eventDate.getMonth() === date.getMonth() &&
-           eventDate.getFullYear() === date.getFullYear();
+    return isSameDay(new Date(event.dateTime), date);
   }).sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
 
 
   return (
     <div className="relative min-h-screen flex flex-col">
-      <header className="p-4 border-b sticky top-0 bg-card/80 backdrop-blur-sm z-10">
-        <h1 className="text-3xl font-headline font-bold text-center text-primary">CineSchedule</h1>
+      <header className="p-4 pt-8 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+        <h1 className="text-3xl font-headline font-bold text-center">CineSchedule</h1>
       </header>
       
       <div className="p-4 flex justify-center">
@@ -89,8 +86,12 @@ export default function CalendarView() {
           mode="single"
           selected={date}
           onSelect={setDate}
-          className="rounded-md border"
+          className="rounded-md border-0"
         />
+      </div>
+      
+      <div className="px-4 pb-2">
+        <div className="border-t border-border -mx-4"></div>
       </div>
 
       <h2 className="text-xl font-headline font-semibold px-4 pb-2">
@@ -103,7 +104,10 @@ export default function CalendarView() {
               <EventCard key={event.id} event={event} />
             ))
           ) : (
-             <p className="text-muted-foreground text-center py-8">No events scheduled for this day.</p>
+             <div className="text-center py-16">
+                <p className="text-muted-foreground">No events scheduled.</p>
+                <Button variant="link" className="text-primary" onClick={() => setIsModalOpen(true)}>Add one?</Button>
+            </div>
           )}
         </div>
       </ScrollArea>
