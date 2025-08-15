@@ -13,7 +13,6 @@ import AddShowModal from "@/components/add-show-modal";
 import { mockEvents, Event } from "@/lib/events";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { SearchOverlay } from "@/app/search/page";
 
 function EventIndicator() {
   return <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary" />;
@@ -21,9 +20,7 @@ function EventIndicator() {
 
 export default function CalendarView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [date, setDate] = useState<Date | undefined>();
   const [events, setEvents] = useState<Event[]>([]);
@@ -68,11 +65,11 @@ export default function CalendarView() {
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
-    setIsEventModalOpen(true);
+    setIsModalOpen(true);
   };
 
-  const closeEventModal = () => {
-    setIsEventModalOpen(false);
+  const closeModal = () => {
+    setIsModalOpen(false);
     setSelectedEvent(null);
   };
 
@@ -146,7 +143,7 @@ export default function CalendarView() {
             ) : (
                <div className="text-center py-16">
                   <p className="text-muted-foreground">No events scheduled.</p>
-                  <Button variant="link" className="text-primary" onClick={() => setIsSearchOpen(true)}>Add one?</Button>
+                  <Button variant="link" className="text-primary" onClick={() => setIsModalOpen(true)}>Add one?</Button>
               </div>
             )}
           </div>
@@ -155,16 +152,14 @@ export default function CalendarView() {
         <Button
           className="fixed bottom-24 right-6 h-16 w-16 rounded-full shadow-lg z-40 bg-primary hover:bg-primary/90"
           size="icon"
-          onClick={() => setIsSearchOpen(true)}
+          onClick={() => setIsModalOpen(true)}
           aria-label="Add new show"
         >
           <Plus className="h-8 w-8" />
         </Button>
 
-        <AddShowModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-        <AddShowModal isOpen={isEventModalOpen} onClose={closeEventModal} eventToEdit={selectedEvent} />
+        <AddShowModal isOpen={isModalOpen} onClose={closeModal} eventToEdit={selectedEvent} />
       </div>
-      {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
     </>
   );
 }
