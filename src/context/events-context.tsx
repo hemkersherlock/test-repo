@@ -18,26 +18,54 @@ interface EventsContextType {
 
 const EventsContext = createContext<EventsContextType | undefined>(undefined);
 
+const LOCAL_STORAGE_KEY = 'cineScheduleEvents';
+
 export function EventsProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     // This code runs only on the client, after the component has mounted.
-    const today = new Date();
-    const addDays = (date: Date, days: number) => {
-      const result = new Date(date);
-      result.setDate(result.getDate() + days);
-      return result;
-    };
-
-    const processedEvents = mockEvents.map(event => ({
-      ...event,
-      dateTime: addDays(today, event.dayOffset).toISOString()
-    }));
-    setEvents(processedEvents);
+    try {
+      const storedEvents = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedEvents) {
+        setEvents(JSON.parse(storedEvents));
+      } else {
+        // If no events in storage, initialize with mock data
+        const today = new Date();
+        const addDays = (date: Date, days: number) => {
+          const result = new Date(date);
+          result.setDate(result.getDate() + days);
+          return result;
+        };
+        const processedEvents = mockEvents.map(event => ({
+          ...event,
+          dateTime: addDays(today, event.dayOffset).toISOString()
+        }));
+        setEvents(processedEvents);
+      }
+    } catch (error) {
+        console.error("Failed to access localStorage or process events:", error);
+        // Fallback to mock events in case of any error
+        setEvents(mockEvents.map(e => ({...e, dateTime: new Date().toISOString()})));
+    } finally {
+        setIsInitialized(true);
+    }
   }, []);
+
+  useEffect(() => {
+    // Save events to localStorage whenever they change, but only after initial load.
+    if (isInitialized) {
+        try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(events));
+        } catch(error) {
+            console.error("Failed to save events to localStorage:", error);
+        }
+    }
+  }, [events, isInitialized]);
+
 
   const addEvent = (event: Omit<Event, 'id'>) => {
     const newEvent = { ...event, id: Date.now() }; // Simple unique ID generation
