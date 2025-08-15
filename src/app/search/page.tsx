@@ -4,10 +4,10 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, Film, Tv, PlusCircle, X } from "lucide-react";
+import { SearchIcon, Film, Tv, X } from "lucide-react";
 import { searchTMDb, TMDbResult } from "@/lib/tmdb";
 import AddShowModal from "@/components/add-show-modal";
-import { Event } from "@/lib/events";
+import type { Event } from "@/lib/events";
 import { debounce } from "lodash";
 
 interface SearchOverlayProps {
