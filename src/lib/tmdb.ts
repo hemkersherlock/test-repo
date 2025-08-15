@@ -1,0 +1,44 @@
+
+export interface TMDbResult {
+  id: number;
+  title: string;
+  name: string;
+  poster_path: string;
+  media_type: 'movie' | 'tv';
+}
+
+const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+const API_URL = "https://api.themoviedb.org/3";
+
+export async function searchTMDb(query: string): Promise<TMDbResult[]> {
+  if (!API_KEY) {
+    console.error("TMDb API key is not configured.");
+    // Return mock data if API key is not available
+    return [
+      { id: 1, title: 'Blade Runner 2049 (Mock)', name: '', poster_path: '/gajva2L0rPYkEWjzgFlBgrSA6E.jpg', media_type: 'movie' },
+      { id: 2, title: '', name: 'Stranger Things (Mock)', poster_path: '/56v2KjBlU4KZQl6seS8S8erBsBI.jpg', media_type: 'tv' }
+    ];
+  }
+
+  try {
+    const response = await fetch(
+      `${API_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false`
+    );
+
+    if (!response.ok) {
+      throw new Error(`TMDb API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Filter out results that are not movies or TV shows and don't have a poster
+    const filteredResults = data.results.filter(
+      (result: any) => (result.media_type === 'movie' || result.media_type === 'tv') && result.poster_path
+    );
+
+    return filteredResults.slice(0, 10); // Return top 10 relevant results
+  } catch (error) {
+    console.error("Failed to fetch from TMDb API:", error);
+    return [];
+  }
+}
