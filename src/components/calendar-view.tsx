@@ -23,12 +23,15 @@ export default function CalendarView() {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date | undefined>();
   const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
-    // Process events on the client to avoid hydration issues
+    // This code runs only on the client, after the component has mounted.
+    // This prevents hydration errors.
     const today = new Date();
+    setDate(today);
+
     const addDays = (date: Date, days: number) => {
       const result = new Date(date);
       result.setDate(result.getDate() + days);
