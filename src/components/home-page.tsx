@@ -1,37 +1,27 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import EventCard from "@/components/event-card";
-import { mockEvents, Event } from "@/lib/events";
+import type { Event } from "@/lib/events";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AddShowModal from "@/components/add-show-modal";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEvents } from "@/context/events-context";
 
 export default function HomePage() {
+  const { events } = useEvents();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
-
-  useEffect(() => {
-    // Process events on the client to avoid hydration issues
-    const today = new Date();
-    const addDays = (date: Date, days: number) => {
-      const result = new Date(date);
-      result.setDate(result.getDate() + days);
-      return result;
-    };
-
-    const processedEvents = mockEvents.map(event => ({
-      ...event,
-      dateTime: addDays(today, event.dayOffset).toISOString()
-    }));
-    setEvents(processedEvents);
-  }, []);
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  const openAddModal = () => {
+    setSelectedEvent(null);
     setIsModalOpen(true);
   };
 
@@ -70,7 +60,7 @@ export default function HomePage() {
        <Button
         className="fixed bottom-24 right-6 h-16 w-16 rounded-full shadow-lg z-40 bg-primary hover:bg-primary/90"
         size="icon"
-        onClick={() => { setSelectedEvent(null); setIsModalOpen(true); }}
+        onClick={openAddModal}
         aria-label="Add new show"
       >
         <Plus className="h-8 w-8" />

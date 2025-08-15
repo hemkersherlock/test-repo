@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import BottomNav from '@/components/bottom-nav';
+import { EventsProvider } from '@/context/events-context';
 
 export const metadata: Metadata = {
   title: 'CineSchedule',
@@ -24,13 +25,15 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body className="font-body antialiased bg-background">
-        <div className="relative flex flex-col h-screen">
-          <main className="flex-grow pb-20">
-            {children}
-          </main>
-          <BottomNav />
-        </div>
-        <Toaster />
+        <EventsProvider>
+          <div className="relative flex flex-col h-screen">
+            <main className="flex-grow pb-20">
+              {children}
+            </main>
+            <BottomNav />
+          </div>
+          <Toaster />
+        </EventsProvider>
       </body>
     </html>
   );

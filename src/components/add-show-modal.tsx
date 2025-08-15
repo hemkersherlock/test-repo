@@ -24,16 +24,19 @@ import type { Event } from "@/lib/events";
 import { searchTMDb, TMDbResult } from "@/lib/tmdb";
 import { debounce } from "lodash";
 import Image from "next/image";
+import { useEvents } from "@/context/events-context";
 
 interface AddShowModalProps {
   isOpen: boolean;
   onClose: () => void;
-  eventToEdit?: Event | Partial<Event> | null;
+  eventToEdit?: Event | null;
 }
 
 type EventType = "movie" | "show";
 
 export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowModalProps) {
+  const { addEvent, updateEvent } = useEvents();
+
   const [title, setTitle] = useState('');
   const [type, setType] = useState<EventType>('movie');
   const [season, setSeason] = useState('');
@@ -46,7 +49,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
   const [searchResults, setSearchResults] = useState<TMDbResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
-  const isEditMode = !!(eventToEdit && 'id' in eventToEdit);
+  const isEditMode = !!eventToEdit;
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
@@ -70,14 +73,14 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
   useEffect(() => {
     if (isOpen) {
       if (eventToEdit) {
-        const eventDate = ('dateTime' in eventToEdit && eventToEdit.dateTime) ? new Date(eventToEdit.dateTime) : new Date();
-        const isShow = ('episode' in eventToEdit && !!eventToEdit.episode) || eventToEdit.aiHint?.includes('series');
+        const eventDate = eventToEdit.dateTime ? new Date(eventToEdit.dateTime) : new Date();
+        const isShow = !!eventToEdit.episode;
         
         setTitle(eventToEdit.title || '');
         setPosterUrl(eventToEdit.posterUrl || 'https://placehold.co/200x300.png');
         setType(isShow ? 'show' : 'movie');
         
-        if (isShow && 'episode' in eventToEdit && eventToEdit.episode) {
+        if (isShow && eventToEdit.episode) {
             const match = eventToEdit.episode.match(/S(\d+)E(\d+)/);
             if (match) {
                 setSeason(match[1]);
@@ -114,6 +117,36 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
     setSearchResults([]);
   };
 
+  const handleSubmit = () => {
+    if (!title || !date || !time) {
+      // Basic validation
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const [hours, minutes] = time.split(':').map(Number);
+    const combinedDateTime = new Date(date);
+    combinedDateTime.setHours(hours, minutes);
+
+    const eventData: Omit<Event, 'id' | 'dayOffset'> = {
+      title,
+      posterUrl: posterUrl || 'https://placehold.co/200x300.png',
+      dateTime: combinedDateTime.toISOString(),
+      notes,
+      aiHint: type === 'show' ? 'series' : 'movie',
+      ...(type === 'show' && { episode: `S${season.padStart(2, '0')}E${episode.padStart(2, '0')}` }),
+    };
+
+    if (isEditMode && eventToEdit) {
+      updateEvent({ ...eventData, id: eventToEdit.id, dayOffset: 0 });
+    } else {
+      addEvent({ ...eventData, dayOffset: 0});
+    }
+
+    onClose();
+  };
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -130,7 +163,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
             <Label htmlFor="title">Search by name</Label>
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input id="title" placeholder={'e.g., Blade Runner 2049'} value={title} onChange={(e) => setTitle(e.target.value)} autoComplete="off" />
+                <Input id="title" placeholder={'e.g., Blade Runner 2049'} value={title} onChange={(e) => setTitle(e.target.value)} autoComplete="off" className="pl-10" />
             </div>
             {searchResults.length > 0 && (
               <div className="absolute top-full mt-1 w-full z-50 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -213,7 +246,7 @@ export default function AddShowModal({ isOpen, onClose, eventToEdit }: AddShowMo
               Cancel
             </Button>
           </DialogClose>
-          <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button type="submit" onClick={handleSubmit} className="bg-primary text-primary-foreground hover:bg-primary/90">
             {isEditMode ? "Save Changes" : "Add to Schedule"}
           </Button>
         </DialogFooter>

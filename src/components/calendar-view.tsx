@@ -10,38 +10,23 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EventCard from "@/components/event-card";
 import AddShowModal from "@/components/add-show-modal";
-import { mockEvents, Event } from "@/lib/events";
+import type { Event } from "@/lib/events";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { useEvents } from "@/context/events-context";
 
 function EventIndicator() {
   return <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary" />;
 }
 
 export default function CalendarView() {
+  const { events } = useEvents();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-
   const [date, setDate] = useState<Date | undefined>();
-  const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
-    // This code runs only on the client, after the component has mounted.
-    // This prevents hydration errors.
-    const today = new Date();
-    setDate(today);
-
-    const addDays = (date: Date, days: number) => {
-      const result = new Date(date);
-      result.setDate(result.getDate() + days);
-      return result;
-    };
-
-    const processedEvents = mockEvents.map(event => ({
-      ...event,
-      dateTime: addDays(today, event.dayOffset).toISOString()
-    }));
-    setEvents(processedEvents);
+    setDate(new Date());
   }, []);
 
   const eventsByDate = useMemo(() => {
@@ -65,6 +50,11 @@ export default function CalendarView() {
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  const openAddModal = () => {
+    setSelectedEvent(null);
     setIsModalOpen(true);
   };
 
@@ -117,7 +107,7 @@ export default function CalendarView() {
               day_hidden: "invisible",
             }}
             components={{
-              DayContent: ({ date, ...props }) => {
+              DayContent: ({ date }) => {
                 const hasEvent = eventDays.some(eventDate => isSameDay(eventDate, date));
                 return (
                   <div className="relative h-full w-full flex items-center justify-center">
@@ -143,7 +133,7 @@ export default function CalendarView() {
             ) : (
                <div className="text-center py-16">
                   <p className="text-muted-foreground">No events scheduled.</p>
-                  <Button variant="link" className="text-primary" onClick={() => setIsModalOpen(true)}>Add one?</Button>
+                  <Button variant="link" className="text-primary" onClick={openAddModal}>Add one?</Button>
               </div>
             )}
           </div>
@@ -152,7 +142,7 @@ export default function CalendarView() {
         <Button
           className="fixed bottom-24 right-6 h-16 w-16 rounded-full shadow-lg z-40 bg-primary hover:bg-primary/90"
           size="icon"
-          onClick={() => setIsModalOpen(true)}
+          onClick={openAddModal}
           aria-label="Add new show"
         >
           <Plus className="h-8 w-8" />
