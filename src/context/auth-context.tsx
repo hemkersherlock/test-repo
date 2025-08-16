@@ -76,7 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInAsGuest = async () => {
     try {
-      await signInAnonymously(auth);
+      // This logic ensures we only sign in anonymously if there's no current user.
+      if (!auth.currentUser) {
+        await signInAnonymously(auth);
+      }
       router.push('/');
     } catch (error) {
       console.error("Anonymous sign-in failed:", error);
