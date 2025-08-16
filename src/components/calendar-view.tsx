@@ -13,7 +13,6 @@ import type { Event } from "@/lib/events";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { useEvents } from "@/context/events-context";
-import { recommendShow, Recommendation } from "@/ai/flows/recommend-show-flow";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import Image from "next/image";
 
@@ -22,11 +21,10 @@ function EventIndicator() {
 }
 
 export default function CalendarView() {
-  const { events, setSelectedEvent, setIsModalOpen, addEvent } = useEvents();
+  const { events, setSelectedEvent, setIsModalOpen } = useEvents();
   const [date, setDate] = useState<Date | undefined>();
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
-  const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
-
+  
   useEffect(() => {
     // Set initial date only on the client to avoid hydration mismatch
     if (!date) {
@@ -34,11 +32,6 @@ export default function CalendarView() {
     }
   }, [date]);
   
-  useEffect(() => {
-    // Reset recommendation when date changes
-    setRecommendation(null);
-  }, [date]);
-
   const eventsByDate = useMemo(() => {
     const map = new Map<number, Event[]>();
     events.forEach(event => {
@@ -64,38 +57,13 @@ export default function CalendarView() {
   };
   
   const handleGetSuggestion = async () => {
+    // Placeholder function
     setIsLoadingSuggestion(true);
-    setRecommendation(null);
-    try {
-      const existingTitles = events.map(e => e.title);
-      const result = await recommendShow({ existingTitles });
-      setRecommendation(result);
-    } catch (error) {
-      console.error("Failed to get recommendation:", error);
-      // You could show a toast notification here
-    } finally {
+    setTimeout(() => {
+      alert("AI Suggestions are currently unavailable in the mobile app version.");
       setIsLoadingSuggestion(false);
-    }
+    }, 1000);
   };
-  
-  const handleAddRecommendation = () => {
-    if (!recommendation?.tmdbResult || !date) return;
-
-    const eventDate = new Date(date);
-    const now = new Date();
-    eventDate.setHours(now.getHours(), now.getMinutes());
-
-    const newEvent: Omit<Event, 'id' | 'dayOffset'> = {
-      title: recommendation.tmdbResult.title || recommendation.tmdbResult.name,
-      posterUrl: `https://image.tmdb.org/t/p/w500${recommendation.tmdbResult.poster_path}`,
-      dateTime: eventDate.toISOString(),
-      notes: recommendation.reason,
-      aiHint: recommendation.type === 'show' ? 'series' : 'movie',
-    };
-    addEvent(newEvent);
-    setRecommendation(null); // Hide recommendation card after adding
-  };
-
 
   if (!date) {
     // Render nothing or a loading spinner on the server and initial client render
@@ -176,38 +144,11 @@ export default function CalendarView() {
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         <p>Finding a new show for you...</p>
                     </div>
-                  ) : recommendation ? (
-                     <Card className="text-left bg-card/50">
-                       <CardHeader>
-                         <CardTitle className="font-headline text-lg">AI Suggestion ✨</CardTitle>
-                       </CardHeader>
-                        <CardContent className="flex gap-4 items-start">
-                           {recommendation.tmdbResult?.poster_path ? (
-                            <div className="relative w-20 h-28 flex-shrink-0 rounded-md overflow-hidden">
-                              <Image
-                                src={`https://image.tmdb.org/t/p/w200${recommendation.tmdbResult.poster_path}`}
-                                alt={`Poster for ${recommendation.title}`}
-                                fill
-                                className="object-cover"
-                                sizes="80px"
-                              />
-                            </div>
-                           ) : <div className="w-20 h-28 flex-shrink-0 rounded-md bg-secondary flex items-center justify-center text-xs text-muted-foreground p-2">No Poster</div>}
-                           <div className="flex flex-col">
-                             <h4 className="font-semibold">{recommendation.title}</h4>
-                             <p className="text-sm text-muted-foreground mt-1">{recommendation.reason}</p>
-                           </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => setRecommendation(null)}>Dismiss</Button>
-                            <Button size="sm" onClick={handleAddRecommendation} disabled={!recommendation.tmdbResult}>Add to Schedule</Button>
-                        </CardFooter>
-                     </Card>
                   ) : (
                     <>
                       <p className="text-muted-foreground">Nothing scheduled for this day.</p>
                       <Button variant="default" className="mt-4" onClick={handleGetSuggestion}>
-                        Get AI Suggestions
+                        Get Suggestion
                       </Button>
                     </>
                   )}
