@@ -8,9 +8,8 @@ import { Button } from "@/components/ui/button";
 import AddShowModal from "@/components/add-show-modal";
 import BottomNav from "@/components/bottom-nav";
 import { useCine } from "@/context/cine-context";
-import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AppLayoutClient({ children }: { children: ReactNode }) {
   const { setFabAction } = useCine();
@@ -32,7 +31,17 @@ export default function AppLayoutClient({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex flex-col h-screen">
       <main className="flex-grow pb-20">
-        {children}
+         <AnimatePresence mode="wait">
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
       
       <Button

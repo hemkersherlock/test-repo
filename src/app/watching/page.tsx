@@ -5,11 +5,13 @@ import { useState, useMemo } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import WatchingCard from "@/components/watching-card";
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Clapperboard, Check, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCine } from '@/context/cine-context';
 import UpdateProgressModal from '@/components/update-progress-modal';
 import type { CineItem, Status } from '@/lib/types';
+import EmptyState from '@/components/empty-state';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TabButton = ({
   label,
@@ -30,7 +32,7 @@ const TabButton = ({
     )}
   >
     {label} ({count})
-    {isActive && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+    {isActive && <motion.div layoutId="underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
   </button>
 );
 
@@ -55,13 +57,14 @@ export default function WatchingPage() {
   const completedFiltered = filteredItems.filter(item => item.status === 'completed');
   const watchlistFiltered = filteredItems.filter(item => item.status === 'watchlist');
 
-  const tabs: { id: Status; label: string; items: CineItem[] }[] = [
-    { id: 'watching', label: 'Watching', items: watchingFiltered },
-    { id: 'completed', label: 'Completed', items: completedFiltered },
-    { id: 'watchlist', label: 'Watchlist', items: watchlistFiltered },
+  const tabs: { id: Status; label: string; items: CineItem[], icon: React.ReactNode, empty: { title: string, desc: string }}[] = [
+    { id: 'watching', label: 'Watching', items: watchingFiltered, icon: <Clapperboard className="w-12 h-12" />, empty: { title: 'Nothing Here', desc: 'Items you are actively watching will appear here.' } },
+    { id: 'completed', label: 'Completed', items: completedFiltered, icon: <Check className="w-12 h-12" />, empty: { title: 'A Blank Slate', desc: 'Movies and shows you complete will be tracked here.' } },
+    { id: 'watchlist', label: 'Watchlist', items: watchlistFiltered, icon: <List className="w-12 h-12" />, empty: { title: 'Your Watchlist is Empty', desc: 'Add movies and shows you want to watch later.' } },
   ];
   
   const activeItems = tabs.find(tab => tab.id === activeTab)?.items || [];
+  const activeTabInfo = tabs.find(tab => tab.id === activeTab)!;
 
   return (
     <>
@@ -93,21 +96,51 @@ export default function WatchingPage() {
           </nav>
 
           <ScrollArea className="h-[calc(100vh-136px-48px-64px)]">
-            <div className="space-y-1 p-4 pb-24">
-              {activeItems.length > 0 ? (
-                activeItems.map((item) => (
-                    <WatchingCard 
-                      key={item.id} 
-                      item={item} 
-                      layout="horizontal" 
-                      onClick={() => handleItemClick(item)}
+            <div className="p-4 pb-24">
+              <AnimatePresence mode="wait">
+                {activeItems.length > 0 ? (
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-1"
+                  >
+                    <AnimatePresence>
+                      {activeItems.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          layout
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0, margin: 0, padding: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                        >
+                          <WatchingCard 
+                            item={item} 
+                            layout="horizontal" 
+                            onClick={() => handleItemClick(item)}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                     key={`${activeTab}-empty`}
+                     initial={{ opacity: 0, scale: 0.95 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     transition={{ duration: 0.3 }}
+                  >
+                    <EmptyState
+                      icon={activeTabInfo.icon}
+                      title={activeTabInfo.empty.title}
+                      description={activeTabInfo.empty.desc}
                     />
-                ))
-              ) : (
-                <div className="text-center py-16">
-                    <p className="text-muted-foreground">No items in this list.</p>
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               </div>
           </ScrollArea>
         </div>

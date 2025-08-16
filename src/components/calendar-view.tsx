@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { format as formatDate, isSameDay, startOfDay } from "date-fns";
 import { DayPicker } from "react-day-picker";
-import { Loader2 } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { useCine } from "@/context/cine-context";
 import type { CineItem } from "@/lib/types";
+import EmptyState from "./empty-state";
 
 function EventIndicator() {
   return <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary" />;
@@ -128,9 +129,11 @@ export default function CalendarView() {
                 <EventCard key={event.id} event={event} onClick={() => handleEventClick(event)} />
               ))
             ) : (
-               <div className="text-center py-8">
-                  <p className="text-muted-foreground">Nothing scheduled for this day.</p>
-              </div>
+              <EmptyState
+                icon={<Calendar className="w-12 h-12" />}
+                title="Nothing scheduled"
+                description="Events you schedule will appear here for the selected day."
+              />
             )}
           </div>
         </ScrollArea>

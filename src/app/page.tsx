@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { CineItem } from "@/lib/types";
-import { Search, Bell, Clapperboard, Calendar, TrendingUp } from "lucide-react";
+import { Search, Bell, Clapperboard, Calendar, TrendingUp, Film } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchTMDb, TMDbResult, getTrending } from "@/lib/tmdb";
 import { debounce } from "lodash";
@@ -16,6 +16,7 @@ import EventCard from "@/components/event-card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import WatchingCard from "@/components/watching-card";
 import TrendingCard from "@/components/trending-card";
+import EmptyState from "@/components/empty-state";
 
 export default function Home() {
   const { items, setModalOpen, setSelectedItem, fabAction, setFabAction } = useCine();
@@ -177,9 +178,11 @@ export default function Home() {
                   <ScrollBar orientation="horizontal" />
                 </ScrollArea>
               ) : (
-                <div className="text-center py-8 px-4">
-                  <p className="text-muted-foreground">No upcoming events. Use the search above to find something to watch!</p>
-                </div>
+                <EmptyState
+                  icon={<Calendar className="w-12 h-12" />}
+                  title="No upcoming events"
+                  description="Use the search above to find and schedule something to watch!"
+                />
               )}
             </section>
 
