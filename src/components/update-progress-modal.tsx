@@ -74,10 +74,12 @@ export default function UpdateProgressModal() {
     if (status === 'seen' && selectedWatchingItem.status !== 'seen') {
         newProgress = 100;
     }
-    // if moving to 'watchlist' from something else
-    if (status === 'watchlist' && selectedWatchingItem.status !== 'watchlist') {
+    
+    // When moving to 'watching' from 'seen', reset progress if it was 100
+    if (status === 'watching' && selectedWatchingItem.status === 'seen') {
         newProgress = 0;
     }
+
 
     const updatedItem: WatchingItem = {
       ...selectedWatchingItem,
@@ -132,8 +134,7 @@ export default function UpdateProgressModal() {
         <div className="grid gap-4 py-4">
           <div className="grid w-full gap-1.5">
             <Label>Status</Label>
-            <div className="grid grid-cols-3 gap-2">
-              <Button variant={status === 'watchlist' ? 'default' : 'outline'} onClick={() => setStatus('watchlist')}>Watchlist</Button>
+            <div className="grid grid-cols-2 gap-2">
               <Button variant={status === 'watching' ? 'default' : 'outline'} onClick={() => setStatus('watching')}>Watching</Button>
               <Button variant={status === 'seen' ? 'default' : 'outline'} onClick={() => setStatus('seen')}>Seen</Button>
             </div>
@@ -162,8 +163,14 @@ export default function UpdateProgressModal() {
         </div>
         
         <DialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
-          <Button onClick={handleSave}>Save Progress</Button>
-          <Button onClick={handleSchedule} variant="secondary">Schedule It</Button>
+           {status === 'watching' ? (
+            <>
+              <Button onClick={handleSave}>Save Progress</Button>
+              <Button onClick={handleSchedule} variant="secondary">Schedule It</Button>
+            </>
+          ) : (
+             <Button onClick={handleSave}>Update Status</Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
