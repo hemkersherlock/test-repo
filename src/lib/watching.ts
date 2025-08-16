@@ -6,4 +6,5 @@ export interface WatchingItem {
   progressText?: string; // e.g., "S02E05" or "Watched"
   posterUrl: string;
   type: 'movie' | 'show';
+  status: 'watching' | 'seen' | 'watchlist';
 }
