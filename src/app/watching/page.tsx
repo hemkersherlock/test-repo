@@ -78,7 +78,7 @@ export default function WatchingPage() {
         <ScrollArea className="h-[calc(100vh-136px-48px-64px)]">
            <div className="space-y-1 p-4 pb-24">
               {activeItems.map((item) => (
-                  <WatchingCard key={item.id} item={item} />
+                  <WatchingCard key={item.id} item={item} layout="horizontal" />
               ))}
             </div>
         </ScrollArea>

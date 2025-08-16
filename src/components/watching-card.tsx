@@ -8,9 +8,10 @@ import { Card } from './ui/card';
 interface WatchingCardProps {
   item: WatchingItem;
   onClick?: () => void;
+  layout?: 'vertical' | 'horizontal';
 }
 
-export default function WatchingCard({ item, onClick }: WatchingCardProps) {
+export default function WatchingCard({ item, onClick, layout = 'vertical' }: WatchingCardProps) {
   const cardProps = {
     className: "bg-card border-border/50 p-0 transition-transform hover:scale-[1.02] hover:shadow-lg flex flex-col h-full overflow-hidden",
     ...(onClick && { onClick, role: 'button', tabIndex: 0 }),
@@ -45,12 +46,10 @@ export default function WatchingCard({ item, onClick }: WatchingCardProps) {
     }
   }
 
-  const isHorizontal = item.status !== 'watching';
-
-  if (isHorizontal) {
-    // Horizontal layout for Seen/Watchlist
+  if (layout === 'horizontal') {
+    // Horizontal layout for Seen/Watchlist/Watching on the Watching page
     return (
-      <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-card transition-colors w-full">
+      <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-card/80 transition-colors w-full">
         <div className="relative w-12 h-16 flex-shrink-0 rounded-md overflow-hidden">
           <Image
             src={item.posterUrl}
@@ -60,8 +59,8 @@ export default function WatchingCard({ item, onClick }: WatchingCardProps) {
             sizes="48px"
           />
         </div>
-        <div className="flex flex-col flex-grow gap-1">
-            <h3 className="font-semibold leading-tight text-foreground">{item.title}</h3>
+        <div className="flex flex-col flex-grow gap-1 min-w-0">
+            <h3 className="font-semibold leading-tight text-foreground truncate">{item.title}</h3>
             <div className="flex items-center text-xs text-muted-foreground gap-2">
               {item.type === 'movie' ? <Film className="w-3 h-3" /> : <Tv className="w-3 h-3" />}
               {renderStatusDetails()}
@@ -71,7 +70,7 @@ export default function WatchingCard({ item, onClick }: WatchingCardProps) {
     );
   }
 
-  // Vertical card layout for "Continue Watching"
+  // Vertical card layout for "Continue Watching" on Home page
   return (
     <Card {...cardProps}>
       <div className="relative w-full aspect-[2/3] flex-shrink-0">
