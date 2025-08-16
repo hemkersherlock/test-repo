@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { CineItem } from "@/lib/types";
-import { Search, Bell, Clapperboard, Calendar, TrendingUp, PlaySquare } from "lucide-react";
+import { Search, Bell, Clapperboard, Calendar, TrendingUp, PlaySquare, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchTMDb, TMDbResult, getTrending } from "@/lib/tmdb";
 import { debounce } from "lodash";
@@ -18,10 +18,12 @@ import WatchingCard from "@/components/watching-card";
 import TrendingCard from "@/components/trending-card";
 import EmptyState from "@/components/empty-state";
 import { startOfDay } from "date-fns";
+import { useAuth } from "@/context/auth-context";
 
 export default function Home() {
   const { items, setModalOpen, setSelectedItem, fabAction, setFabAction, setUpdateModalOpen } = useCine();
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<TMDbResult[]>([]);
@@ -130,9 +132,14 @@ export default function Home() {
           <header className="p-4 pt-8 sticky top-0 bg-background/80 backdrop-blur-sm z-20 flex flex-col gap-4">
             <div className="flex justify-between items-center">
                <h1 className="text-3xl font-headline font-bold text-center">CineSchedule</h1>
-               <Button variant="ghost" size="icon" onClick={handleNotificationClick} aria-label="Enable Notifications">
-                  <Bell className="h-6 w-6" />
-               </Button>
+               <div className="flex items-center">
+                 <Button variant="ghost" size="icon" onClick={handleNotificationClick} aria-label="Enable Notifications">
+                    <Bell className="h-6 w-6" />
+                 </Button>
+                 <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign Out">
+                    <LogOut className="h-6 w-6" />
+                 </Button>
+               </div>
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -272,3 +279,5 @@ export default function Home() {
     </>
   );
 }
+
+    

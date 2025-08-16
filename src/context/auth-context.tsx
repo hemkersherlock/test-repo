@@ -3,11 +3,24 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signInAnonymously, User } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  User,
+  signOut as firebaseSignOut,
+  GoogleAuthProvider,
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  signInWithGoogle: () => Promise<void>;
+  signUpWithEmail: (email: string, pass: string) => Promise<any>;
+  signInWithEmail: (email: string, pass: string) => Promise<any>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -15,29 +28,71 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        setLoading(false);
-      } else {
-        // No user is signed in, so sign them in anonymously.
-        signInAnonymously(auth).catch((error) => {
-          console.error("Anonymous sign-in failed:", error);
-          setLoading(false);
-        });
-      }
+      setUser(currentUser);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+  
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      router.push('/');
+    } catch (error) {
+      console.error("Google sign-in failed:", error);
+    }
+  };
 
-  const value = { user, loading };
+  const signUpWithEmail = async (email: string, pass: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+      router.push('/');
+      return userCredential;
+    } catch (error) {
+      console.error("Email sign-up failed:", error);
+      throw error;
+    }
+  };
+  
+  const signInWithEmail = async (email: string, pass: string) => {
+     try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      router.push('/');
+      return userCredential;
+    } catch (error) {
+      console.error("Email sign-in failed:", error);
+      throw error;
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      await firebaseSignOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error("Sign-out failed:", error);
+    }
+  };
+
+
+  const value = { 
+    user, 
+    loading,
+    signInWithGoogle,
+    signUpWithEmail,
+    signInWithEmail,
+    signOut,
+  };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
@@ -49,3 +104,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    

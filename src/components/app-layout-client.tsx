@@ -23,6 +23,11 @@ export default function AppLayoutClient({ children }: { children: ReactNode }) {
       setTimeout(() => setFabAction(true), 100);
     }
   };
+  
+  // Don't render the layout on the login page
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
 
   return (
     <div className="relative flex flex-col h-screen">
@@ -44,3 +49,5 @@ export default function AppLayoutClient({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+    

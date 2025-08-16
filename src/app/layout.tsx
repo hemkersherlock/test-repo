@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AppLayoutClient from '@/components/app-layout-client';
 import { CineProvider } from '@/context/cine-context';
 import { AuthProvider } from '@/context/auth-context';
+import ProtectedRoute from '@/components/protected-route';
 
 export const metadata: Metadata = {
   title: 'CineSchedule',
@@ -29,9 +30,11 @@ export default function RootLayout({
       <body className="font-body antialiased bg-background">
         <AuthProvider>
           <CineProvider>
-            <AppLayoutClient>
-              {children}
-            </AppLayoutClient>
+            <ProtectedRoute>
+              <AppLayoutClient>
+                {children}
+              </AppLayoutClient>
+            </ProtectedRoute>
             <Toaster />
           </CineProvider>
         </AuthProvider>
@@ -39,3 +42,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
