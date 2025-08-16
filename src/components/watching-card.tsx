@@ -1,47 +1,56 @@
 
 import Image from 'next/image';
-import { Film, Tv, CirclePlay } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import type { WatchingItem } from '@/lib/watching';
+import { Progress } from './ui/progress';
+import { CheckCircle } from 'lucide-react';
 
 interface WatchingCardProps {
   item: WatchingItem;
   onClick?: () => void;
 }
 
-export default function WatchingCard({ item, onClick }: WatchingCardProps) {
+export default function WatchingCard({ item }: WatchingCardProps) {
   const isMovie = item.type === 'movie';
 
   return (
-    <Card className="bg-card border-border/50 p-4 flex gap-4 items-start relative overflow-hidden">
-      <div className="absolute top-0 right-0 bottom-0 w-1/3 bg-gradient-to-l from-black/60 to-transparent z-0"></div>
-       <Image
-          src={item.posterUrl}
-          alt={`Poster for ${item.title}`}
-          fill
-          className="object-cover object-top z-[-1]"
-        />
-      <div className="relative w-24 h-36 flex-shrink-0 rounded-md overflow-hidden shadow-lg">
+    <Card className="bg-card border-border/50 p-4 flex gap-4 items-center relative overflow-hidden h-32 rounded-lg">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
         <Image
           src={item.posterUrl}
-          alt={`Poster for ${item.title}`}
+          alt={`Background for ${item.title}`}
           fill
-          className="object-cover"
-          sizes="96px"
+          className="object-cover object-center opacity-20"
         />
+        <div className="absolute inset-0 bg-gradient-to-r from-card via-card/80 to-card/50"></div>
       </div>
-      <div className="flex flex-col flex-grow pt-2 z-10">
-          <h3 className="font-headline text-lg leading-tight font-semibold text-white [text-shadow:1px_1px_3px_rgba(0,0,0,0.7)]">{item.title}</h3>
-          <p className="text-sm text-primary-foreground/90 pt-1 font-medium [text-shadow:1px_1px_2px_rgba(0,0,0,0.8)]">{item.progress}</p>
-        <div className="mt-4 flex items-center gap-2">
-            <Button size="sm" className="bg-primary/90 text-primary-foreground hover:bg-primary/100 backdrop-blur-sm">
-                <CirclePlay />
-                <span>Continue</span>
-            </Button>
-            <Button size="sm" variant="outline" className="bg-background/50 border-border/50 backdrop-blur-sm">
-                Update
-            </Button>
+      
+      {/* Card Content */}
+      <div className="relative z-10 flex gap-4 items-center w-full">
+        <div className="relative w-20 h-24 flex-shrink-0 rounded-md overflow-hidden shadow-lg">
+          <Image
+            src={item.posterUrl}
+            alt={`Poster for ${item.title}`}
+            fill
+            className="object-cover"
+            sizes="80px"
+          />
+        </div>
+        <div className="flex flex-col flex-grow gap-2">
+            <h3 className="font-headline text-lg leading-tight font-semibold text-foreground">{item.title}</h3>
+            
+            {isMovie ? (
+               <div className="flex items-center gap-2 text-sm text-green-400 font-medium">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Watched Completely</span>
+               </div>
+            ) : (
+              <div className="w-full">
+                <p className="text-xs text-muted-foreground font-medium mb-1">{item.progressText}</p>
+                <Progress value={item.progress} className="h-2" />
+              </div>
+            )}
         </div>
       </div>
     </Card>

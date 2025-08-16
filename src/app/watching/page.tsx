@@ -9,30 +9,34 @@ const dummyWatchingData: WatchingItem[] = [
   {
     id: 1,
     title: "House of the Dragon",
-    progress: "S02E01",
+    progress: 85,
     posterUrl: "https://image.tmdb.org/t/p/w500/zDb5dFwB4ea3aKVxQk1B2kzbCjE.jpg",
     type: "show",
+    progressText: "S02E01",
   },
   {
     id: 2,
     title: "The Boys",
-    progress: "S04E04",
+    progress: 50,
     posterUrl: "https://image.tmdb.org/t/p/w500/2zmTngn1tJycAZB2aB6bI7EBQ5J.jpg",
     type: "show",
+    progressText: "S04E04",
   },
   {
     id: 3,
     title: "Poor Things",
-    progress: "Watched 45%",
+    progress: 100,
     posterUrl: "https://image.tmdb.org/t/p/w500/kCGlIMrg8PzGpqefndqvLGww6I5.jpg",
     type: "movie",
+    progressText: "Watched",
   },
   {
     id: 4,
     title: "Arcane",
-    progress: "S01E07",
+    progress: 78,
     posterUrl: "https://image.tmdb.org/t/p/w500/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg",
     type: "show",
+    progressText: "S01E07",
   },
 ];
 

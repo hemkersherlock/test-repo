@@ -2,7 +2,8 @@
 export interface WatchingItem {
   id: number;
   title: string;
-  progress: string; // e.g., "S02E05" or "Watched 50%"
+  progress: number; // 0-100 for progress bar
+  progressText?: string; // e.g., "S02E05" or "Watched"
   posterUrl: string;
   type: 'movie' | 'show';
 }
