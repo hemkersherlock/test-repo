@@ -157,7 +157,7 @@ export default function Home() {
                 <ScrollArea className="w-full whitespace-nowrap">
                   <div className="flex w-max space-x-4 px-4">
                     {upcomingEvents.map((event) => (
-                      <div key={event.id} className="w-40">
+                      <div key={event.id} className="w-32">
                          <EventCard event={event} onClick={() => { setSelectedEvent(event); setIsModalOpen(true); }} />
                       </div>
                     ))}
@@ -181,7 +181,7 @@ export default function Home() {
                 <ScrollArea className="w-full whitespace-nowrap">
                   <div className="flex w-max space-x-4 px-4">
                     {continueWatchingItems.map((item) => (
-                      <div key={item.id} className="w-36">
+                      <div key={item.id} className="w-32">
                         <WatchingCard item={item} />
                       </div>
                     ))}
