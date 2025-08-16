@@ -2,6 +2,10 @@
   "name": "CineSchedule",
   "short_name": "CineSchedule",
   "description": "Your personal movie and show scheduling app.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F1D5D7",
+  "theme_color": "#E63946",
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -13,10 +17,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "theme_color": "#E63946",
-  "background_color": "#121212",
-  "start_url": "/",
-  "display": "standalone",
-  "orientation": "portrait"
+  ]
 }
