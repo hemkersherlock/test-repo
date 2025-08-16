@@ -158,7 +158,7 @@ export default function Home() {
                   <div className="flex w-max space-x-4 px-4">
                     {upcomingEvents.map((event) => (
                       <div key={event.id} className="w-32">
-                         <EventCard event={event} onClick={() => { setSelectedEvent(event); setIsModalOpen(true); }} />
+                         <EventCard event={event} layout="vertical" onClick={() => { setSelectedEvent(event); setIsModalOpen(true); }} />
                       </div>
                     ))}
                   </div>

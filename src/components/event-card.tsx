@@ -11,9 +11,10 @@ import { format } from 'date-fns';
 interface EventCardProps {
   event: Event;
   onClick?: () => void;
+  layout?: 'vertical' | 'horizontal';
 }
 
-export default function EventCard({ event, onClick }: EventCardProps) {
+export default function EventCard({ event, onClick, layout = 'horizontal' }: EventCardProps) {
   const [formattedDateTime, setFormattedDateTime] = useState({ date: '', time: '' });
 
   useEffect(() => {
@@ -36,6 +37,37 @@ export default function EventCard({ event, onClick }: EventCardProps) {
     ...(onClick && { onClick, role: 'button', tabIndex: 0 }),
   };
 
+  if (layout === 'horizontal') {
+    return (
+       <div 
+        className="flex items-center gap-4 p-2 rounded-lg hover:bg-card/80 transition-colors w-full cursor-pointer"
+        onClick={onClick}
+        role="button"
+        tabIndex={0}
+      >
+        <div className="relative w-12 h-16 flex-shrink-0 rounded-md overflow-hidden">
+          <Image
+            src={event.posterUrl}
+            alt={`Poster for ${event.title}`}
+            fill
+            className="object-cover"
+            sizes="48px"
+            data-ai-hint={event.aiHint}
+          />
+        </div>
+        <div className="flex flex-col flex-grow gap-1 min-w-0">
+            <h3 className="font-semibold leading-tight text-foreground truncate">{event.title}</h3>
+            {!isMovie && <p className="text-xs text-muted-foreground pt-0.5 truncate">{event.episode}</p>}
+            <div className="flex items-center text-xs text-primary font-semibold gap-1.5">
+              <Clock className="w-3 h-3" />
+              <span>{formattedDateTime.time}</span>
+            </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Vertical card layout (used on Home page)
   return (
     <Card {...cardProps}>
       <div className="relative w-full aspect-[2/3] flex-shrink-0">
