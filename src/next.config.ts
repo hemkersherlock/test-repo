@@ -9,6 +9,8 @@ const withPWA = createPWA({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: 'export',
+  swcMinify: true,
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -16,6 +18,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -29,13 +32,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-    ],
-  },
-  experimental: {
-    // This is the key change to make Next.js and Expo work together.
-    transpilePackages: [
-      'react-native',
-      'expo',
     ],
   },
 };
