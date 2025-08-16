@@ -1,22 +1,26 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
-import EventCard from "@/components/event-card";
-import { useEvents } from "@/context/events-context";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState, useCallback, useMemo } from "react";
 import type { Event } from "@/lib/events";
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, Clapperboard, Calendar, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { searchTMDb, TMDbResult } from "@/lib/tmdb";
+import { searchTMDb, TMDbResult, getTrending } from "@/lib/tmdb";
 import { debounce } from "lodash";
 import Image from "next/image";
 import SearchResultModal from "@/components/search-result-modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useEvents } from "@/context/events-context";
+import { useWatching } from "@/context/watching-context";
+import EventCard from "@/components/event-card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import WatchingCard from "@/components/watching-card";
+import TrendingCard from "@/components/trending-card";
 
 export default function Home() {
   const { events, setSelectedEvent, setIsModalOpen } = useEvents();
+  const { addWatchingItem, watchingItems } = useWatching();
   const { toast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +28,16 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedResult, setSelectedResult] = useState<TMDbResult | null>(null);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
+  const [trendingItems, setTrendingItems] = useState<TMDbResult[]>([]);
+
+  // Fetch trending items on component mount
+  useState(() => {
+    const fetchTrending = async () => {
+      const items = await getTrending();
+      setTrendingItems(items);
+    };
+    fetchTrending();
+  });
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
@@ -35,7 +49,7 @@ export default function Home() {
       } else {
         setSearchResults([]);
       }
-    }, 500),
+    }, 300),
     []
   );
 
@@ -52,11 +66,6 @@ export default function Home() {
     setSearchQuery('');
   };
 
-  const handleEventClick = (event: Event) => {
-    setSelectedEvent(event);
-    setIsModalOpen(true);
-  };
-
   const handleNotificationClick = async () => {
     if (!('Notification' in window)) {
       toast({ title: "Error", description: "This browser does not support desktop notification." });
@@ -67,31 +76,32 @@ export default function Home() {
       new Notification("You're all set!", {
         body: "You will receive notifications for upcoming shows.",
       });
-      toast({ title: "Success!", description: "Notifications are already enabled." });
     } else if (Notification.permission !== 'denied') {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         new Notification("Notifications Enabled!", {
           body: "You will now be notified about your scheduled shows.",
         });
-        toast({ title: "Success!", description: "Notifications have been enabled." });
-      } else {
-        toast({ title: "Info", description: "You have not enabled notifications." });
       }
     } else {
        toast({ title: "Notifications Blocked", description: "Please enable notifications in your browser settings." });
     }
   };
   
-  const upcomingEvents = events
+  const upcomingEvents = useMemo(() => events
     .filter(event => new Date(event.dateTime) >= new Date())
-    .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+    .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
+    .slice(0, 5), [events]);
+
+  const continueWatchingItems = useMemo(() => 
+    watchingItems.filter(item => item.status === 'watching' && item.progress > 0 && item.progress < 100), 
+  [watchingItems]);
 
   return (
     <>
       <div className="flex justify-center min-h-full">
         <div className="w-full max-w-lg">
-          <header className="p-4 pt-8 sticky top-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col gap-4">
+          <header className="p-4 pt-8 sticky top-0 bg-background/80 backdrop-blur-sm z-20 flex flex-col gap-4">
             <div className="flex justify-between items-center">
                <h1 className="text-3xl font-headline font-bold text-center">CineSchedule</h1>
                <Button variant="ghost" size="icon" onClick={handleNotificationClick} aria-label="Enable Notifications">
@@ -133,21 +143,75 @@ export default function Home() {
                 </div>
               )}
             </div>
-             <h2 className="text-lg font-headline font-semibold text-center pt-2">Upcoming Schedule</h2>
           </header>
-          <ScrollArea className="h-[calc(100vh-214px)] px-4">
-             <div className="space-y-4 pb-24">
+          
+          {/* Main content area */}
+          <div className="pb-24 space-y-8">
+            {/* Upcoming Widget */}
+            <section>
+              <h2 className="text-lg font-headline font-semibold px-4 pb-2 pt-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Upcoming
+              </h2>
               {upcomingEvents.length > 0 ? (
-                upcomingEvents.map((event) => (
-                  <EventCard key={event.id} event={event} onClick={() => handleEventClick(event)} />
-                ))
+                <ScrollArea className="w-full whitespace-nowrap">
+                  <div className="flex w-max space-x-4 px-4">
+                    {upcomingEvents.map((event) => (
+                      <div key={event.id} className="w-40">
+                         <EventCard event={event} onClick={() => { setSelectedEvent(event); setIsModalOpen(true); }} />
+                      </div>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
               ) : (
-                <div className="text-center py-16">
-                    <p className="text-muted-foreground">No upcoming events.</p>
+                <div className="text-center py-8 px-4">
+                  <p className="text-muted-foreground">No upcoming events. Use the search above to find something to watch!</p>
                 </div>
               )}
-            </div>
-          </ScrollArea>
+            </section>
+
+            {/* Continue Watching */}
+            {continueWatchingItems.length > 0 && (
+              <section>
+                <h2 className="text-lg font-headline font-semibold px-4 pb-2 flex items-center gap-2">
+                  <Clapperboard className="w-5 h-5" />
+                  Continue Watching
+                </h2>
+                <ScrollArea className="w-full whitespace-nowrap">
+                  <div className="flex w-max space-x-4 px-4">
+                    {continueWatchingItems.map((item) => (
+                      <div key={item.id} className="w-36">
+                        <WatchingCard item={item} />
+                      </div>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </section>
+            )}
+
+            {/* Trending Row */}
+            {trendingItems.length > 0 && (
+              <section>
+                 <h2 className="text-lg font-headline font-semibold px-4 pb-2 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Trending This Week
+                </h2>
+                 <ScrollArea className="w-full whitespace-nowrap">
+                  <div className="flex w-max space-x-4 px-4">
+                    {trendingItems.map((item) => (
+                      <div key={item.id} className="w-40">
+                        <TrendingCard item={item} onClick={() => handleResultClick(item)} />
+                      </div>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </section>
+            )}
+
+          </div>
         </div>
       </div>
       {selectedResult && (
