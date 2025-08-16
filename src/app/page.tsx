@@ -28,15 +28,20 @@ export default function Home() {
   const [selectedResult, setSelectedResult] = useState<TMDbResult | null>(null);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
   const [trendingItems, setTrendingItems] = useState<TMDbResult[]>([]);
-  const [isClient, setIsClient] = useState(false);
+  const [upcomingEvents, setUpcomingEvents] = useState<CineItem[]>([]);
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pageTopRef = useRef<HTMLDivElement>(null);
 
-  // Set isClient to true after component mounts to avoid hydration errors
+  // Filter and sort upcoming events on the client side to prevent hydration errors
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    const now = new Date();
+    const futureEvents = items
+      .filter(item => item.status === 'scheduled' && item.scheduleDate && new Date(item.scheduleDate) >= now)
+      .sort((a, b) => new Date(a.scheduleDate!).getTime() - new Date(b.scheduleDate!).getTime())
+      .slice(0, 5);
+    setUpcomingEvents(futureEvents);
+  }, [items]);
 
   // Handle FAB click action
   useEffect(() => {
@@ -106,14 +111,6 @@ export default function Home() {
     }
   };
   
-  const upcomingEvents = useMemo(() => {
-    if (!isClient) return []; // Don't render on server or initial client render
-    return items
-      .filter(item => item.status === 'scheduled' && item.scheduleDate && new Date(item.scheduleDate) >= new Date())
-      .sort((a, b) => new Date(a.scheduleDate!).getTime() - new Date(b.scheduleDate!).getTime())
-      .slice(0, 5);
-  }, [items, isClient]);
-
   const continueWatchingItems = useMemo(() => 
     items.filter(item => item.status === 'watching' && item.progress && item.progress.current > 0 && item.progress.current < 100), 
   [items]);
@@ -175,7 +172,7 @@ export default function Home() {
                 <Calendar className="w-5 h-5" />
                 Upcoming
               </h2>
-              {isClient && upcomingEvents.length > 0 ? (
+              {upcomingEvents.length > 0 ? (
                 <ScrollArea className="w-full whitespace-nowrap">
                   <div className="flex w-max space-x-4 px-4">
                     {upcomingEvents.map((item) => (
