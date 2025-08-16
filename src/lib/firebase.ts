@@ -13,12 +13,13 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase for SSR
+// Initialize Firebase
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 const db: Firestore = getFirestore(app);
 
 // Initialize Firebase Auth with persistence
+// This check is crucial for Next.js to handle server-side and client-side correctly.
 const auth: Auth = typeof window !== 'undefined' 
   ? initializeAuth(app, { persistence: indexedDBLocalPersistence }) 
   : getAuth(app);
