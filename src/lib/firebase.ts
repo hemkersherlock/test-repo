@@ -4,11 +4,9 @@ import { getFirestore, Firestore } from "firebase/firestore";
 import { 
   getAuth, 
   Auth, 
-  initializeAuth, 
-  browserLocalPersistence, 
-  browserPopupRedirectResolver,
+  initializeAuth,
   indexedDBLocalPersistence,
-  inMemoryPersistence
+  browserPopupRedirectResolver
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -24,14 +22,16 @@ const firebaseConfig = {
 // Initialize Firebase
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db: Firestore = getFirestore(app);
+let auth: Auth;
 
-// Conditionally initialize Auth for browser or server environment
-const auth: Auth = typeof window !== 'undefined' 
-  ? initializeAuth(app, {
-      persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence],
-      popupRedirectResolver: browserPopupRedirectResolver,
-    })
-  : getAuth(app);
-
+// Ensure auth is only initialized on the client
+if (typeof window !== 'undefined') {
+  auth = initializeAuth(app, {
+    persistence: indexedDBLocalPersistence,
+    popupRedirectResolver: browserPopupRedirectResolver,
+  });
+} else {
+  auth = getAuth(app);
+}
 
 export { app, db, auth };
