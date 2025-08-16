@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { CineItem } from "@/lib/types";
-import { Search, Bell, Clapperboard, Calendar, TrendingUp } from "lucide-react";
+import { Search, Bell, Clapperboard, Calendar, TrendingUp, PlaySquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchTMDb, TMDbResult, getTrending } from "@/lib/tmdb";
 import { debounce } from "lodash";
@@ -20,7 +20,7 @@ import EmptyState from "@/components/empty-state";
 import { startOfDay } from "date-fns";
 
 export default function Home() {
-  const { items, setModalOpen, setSelectedItem, fabAction, setFabAction } = useCine();
+  const { items, setModalOpen, setSelectedItem, fabAction, setFabAction, setUpdateModalOpen } = useCine();
   const { toast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,9 +33,7 @@ export default function Home() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pageTopRef = useRef<HTMLDivElement>(null);
 
-  // Memoize upcoming events to prevent expensive recalculations on every render
   const upcomingEvents = useMemo(() => {
-    // Use startOfDay to compare dates without being affected by time
     const today = startOfDay(new Date());
     return items
       .filter(item => 
@@ -47,18 +45,22 @@ export default function Home() {
       .slice(0, 5);
   }, [items]);
 
+  const continueWatchingItems = useMemo(() => 
+    items.filter(item => item.status === 'watching' && item.progress && item.progress.current > 0 && item.progress.current < 100), 
+  [items]);
 
-  // Handle FAB click action
+  const startWatchingItems = useMemo(() => 
+    items.filter(item => item.status === 'watchlist'), 
+  [items]);
+
   useEffect(() => {
     if (fabAction) {
       pageTopRef.current?.scrollIntoView({ behavior: 'smooth' });
       searchInputRef.current?.focus();
-      setFabAction(false); // Reset the action
+      setFabAction(false);
     }
   }, [fabAction, setFabAction]);
 
-
-  // Fetch trending items on component mount
   useEffect(() => {
     const fetchTrending = async () => {
       const items = await getTrending();
@@ -115,11 +117,12 @@ export default function Home() {
        toast({ title: "Notifications Blocked", description: "Please enable notifications in your browser settings." });
     }
   };
-  
-  const continueWatchingItems = useMemo(() => 
-    items.filter(item => item.status === 'watching' && item.progress && item.progress.current > 0 && item.progress.current < 100), 
-  [items]);
 
+  const handleWatchlistItemClick = (item: CineItem) => {
+    setSelectedItem(item);
+    setUpdateModalOpen(true);
+  };
+  
   return (
     <>
       <div ref={pageTopRef} className="flex justify-center min-h-full">
@@ -170,8 +173,27 @@ export default function Home() {
           </header>
           
           <div className="pb-24 space-y-8">
+            {trendingItems.length > 0 && (
+              <section>
+                 <h2 className="text-lg font-headline font-semibold px-4 pb-2 pt-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Trending This Week
+                </h2>
+                 <ScrollArea className="w-full whitespace-nowrap">
+                  <div className="flex w-max space-x-4 px-4">
+                    {trendingItems.map((item) => (
+                      <div key={item.id} className="w-40">
+                        <TrendingCard item={item} onClick={() => handleResultClick(item)} />
+                      </div>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </section>
+            )}
+            
             <section>
-              <h2 className="text-lg font-headline font-semibold px-4 pb-2 pt-4 flex items-center gap-2">
+              <h2 className="text-lg font-headline font-semibold px-4 pb-2 flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
                 Upcoming
               </h2>
@@ -213,18 +235,22 @@ export default function Home() {
                 </ScrollArea>
               </section>
             )}
-
-            {trendingItems.length > 0 && (
+            
+            {startWatchingItems.length > 0 && (
               <section>
-                 <h2 className="text-lg font-headline font-semibold px-4 pb-2 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
-                  Trending This Week
+                <h2 className="text-lg font-headline font-semibold px-4 pb-2 flex items-center gap-2">
+                  <PlaySquare className="w-5 h-5" />
+                  Start Watching
                 </h2>
-                 <ScrollArea className="w-full whitespace-nowrap">
+                <ScrollArea className="w-full whitespace-nowrap">
                   <div className="flex w-max space-x-4 px-4">
-                    {trendingItems.map((item) => (
-                      <div key={item.id} className="w-40">
-                        <TrendingCard item={item} onClick={() => handleResultClick(item)} />
+                    {startWatchingItems.map((item) => (
+                      <div key={item.id} className="w-32">
+                        <WatchingCard 
+                          item={item} 
+                          layout="vertical" 
+                          onClick={() => handleWatchlistItemClick(item)}
+                        />
                       </div>
                     ))}
                   </div>
