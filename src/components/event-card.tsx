@@ -3,13 +3,13 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Film, Tv, Clock } from 'lucide-react';
-import type { Event } from '@/lib/events';
+import { Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { format } from 'date-fns';
+import type { CineItem } from '@/lib/types';
 
 interface EventCardProps {
-  event: Event;
+  event: CineItem;
   onClick?: () => void;
   layout?: 'vertical' | 'horizontal';
 }
@@ -18,19 +18,22 @@ export default function EventCard({ event, onClick, layout = 'horizontal' }: Eve
   const [formattedDateTime, setFormattedDateTime] = useState({ date: '', time: '' });
 
   useEffect(() => {
-    // This code runs only on the client, after the component has mounted.
-    const eventDate = new Date(event.dateTime);
-    setFormattedDateTime({
-      date: format(eventDate, 'MMM d'),
-      time: eventDate.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      }),
-    });
-  }, [event.dateTime]);
+    if (event.scheduleDate) {
+      const eventDate = new Date(event.scheduleDate);
+      setFormattedDateTime({
+        date: format(eventDate, 'MMM d'),
+        time: eventDate.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        }),
+      });
+    }
+  }, [event.scheduleDate]);
 
-  const isMovie = !event.episode;
+  const isMovie = event.type === 'movie';
+  
+  const progressText = !isMovie && event.progress ? `S${String(event.progress.season).padStart(2, '0')}E${String(event.progress.episode).padStart(2, '0')}` : '';
 
   const cardProps = {
     className: "bg-card border-border/50 p-0 transition-transform hover:scale-[1.02] hover:shadow-lg flex flex-col h-full overflow-hidden",
@@ -52,12 +55,12 @@ export default function EventCard({ event, onClick, layout = 'horizontal' }: Eve
             fill
             className="object-cover"
             sizes="48px"
-            data-ai-hint={event.aiHint}
+            data-ai-hint={event.type}
           />
         </div>
         <div className="flex flex-col flex-grow gap-1 min-w-0">
             <h3 className="font-semibold leading-tight text-foreground truncate">{event.title}</h3>
-            {!isMovie && <p className="text-xs text-muted-foreground pt-0.5 truncate">{event.episode}</p>}
+            {!isMovie && <p className="text-xs text-muted-foreground pt-0.5 truncate">{progressText}</p>}
             <div className="flex items-center text-xs text-primary font-semibold gap-1.5">
               <Clock className="w-3 h-3" />
               <span>{formattedDateTime.time}</span>
@@ -77,12 +80,12 @@ export default function EventCard({ event, onClick, layout = 'horizontal' }: Eve
           fill
           className="object-cover"
           sizes="160px"
-          data-ai-hint={event.aiHint}
+          data-ai-hint={event.type}
         />
       </div>
       <div className="flex flex-col flex-grow p-2">
         <h3 className="font-headline text-sm leading-tight font-semibold truncate">{event.title}</h3>
-        {!isMovie && <p className="text-xs text-muted-foreground pt-0.5 truncate">{event.episode}</p>}
+        {!isMovie && <p className="text-xs text-muted-foreground pt-0.5 truncate">{progressText}</p>}
         <div className="mt-1 pt-1 border-t border-dashed border-border/50">
           <p className="text-xs font-semibold text-primary flex items-center gap-1 h-5">
             <Clock className="h-3 w-3" />

@@ -1,17 +1,15 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import WatchingCard from "@/components/watching-card";
-import type { WatchingItem } from "@/lib/watching";
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useWatching } from '@/context/watching-context';
+import { useCine } from '@/context/cine-context';
 import UpdateProgressModal from '@/components/update-progress-modal';
-
-type Status = 'watchlist' | 'watching' | 'seen';
+import type { CineItem, Status } from '@/lib/types';
 
 const TabButton = ({
   label,
@@ -38,25 +36,28 @@ const TabButton = ({
 
 
 export default function WatchingPage() {
+  const { items, setSelectedItem, setUpdateModalOpen } = useCine();
   const [activeTab, setActiveTab] = useState<Status>('watching');
-  const { 
-    watchingItems,
-    setSelectedWatchingItem,
-    setIsUpdateModalOpen
-  } = useWatching();
+  const [filterQuery, setFilterQuery] = useState('');
 
-  const handleItemClick = (item: WatchingItem) => {
-    setSelectedWatchingItem(item);
-    setIsUpdateModalOpen(true);
+  const handleItemClick = (item: CineItem) => {
+    setSelectedItem(item);
+    setUpdateModalOpen(true);
   };
 
-  const watchingFiltered = watchingItems.filter(item => item.status === 'watching');
-  const seenFiltered = watchingItems.filter(item => item.status === 'seen');
-  const watchlistFiltered = watchingItems.filter(item => item.status === 'watchlist');
+  const filteredItems = useMemo(() => {
+    return items.filter(item => 
+      item.title.toLowerCase().includes(filterQuery.toLowerCase())
+    );
+  }, [items, filterQuery]);
 
-  const tabs: { id: Status; label: string; items: WatchingItem[] }[] = [
+  const watchingFiltered = filteredItems.filter(item => item.status === 'watching');
+  const completedFiltered = filteredItems.filter(item => item.status === 'completed');
+  const watchlistFiltered = filteredItems.filter(item => item.status === 'watchlist');
+
+  const tabs: { id: Status; label: string; items: CineItem[] }[] = [
     { id: 'watching', label: 'Watching', items: watchingFiltered },
-    { id: 'seen', label: 'Seen', items: seenFiltered },
+    { id: 'completed', label: 'Completed', items: completedFiltered },
     { id: 'watchlist', label: 'Watchlist', items: watchlistFiltered },
   ];
   
@@ -70,7 +71,12 @@ export default function WatchingPage() {
             <h1 className="text-3xl font-headline font-bold text-center">My Lists</h1>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Filter your lists..." className="pl-10" />
+              <Input 
+                placeholder="Filter your lists..." 
+                className="pl-10" 
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+              />
             </div>
           </header>
           
@@ -88,14 +94,20 @@ export default function WatchingPage() {
 
           <ScrollArea className="h-[calc(100vh-136px-48px-64px)]">
             <div className="space-y-1 p-4 pb-24">
-                {activeItems.map((item) => (
+              {activeItems.length > 0 ? (
+                activeItems.map((item) => (
                     <WatchingCard 
                       key={item.id} 
                       item={item} 
                       layout="horizontal" 
                       onClick={() => handleItemClick(item)}
                     />
-                ))}
+                ))
+              ) : (
+                <div className="text-center py-16">
+                    <p className="text-muted-foreground">No items in this list.</p>
+                </div>
+              )}
               </div>
           </ScrollArea>
         </div>

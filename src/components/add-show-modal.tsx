@@ -20,27 +20,26 @@ import { Calendar } from "./ui/calendar";
 import { format as formatDate } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useCallback } from "react";
-import type { Event } from "@/lib/events";
 import { searchTMDb, TMDbResult } from "@/lib/tmdb";
 import { debounce } from "lodash";
 import Image from "next/image";
-import { useEvents } from "@/context/events-context";
+import { useCine } from "@/context/cine-context";
+import type { CineItem } from "@/lib/types";
 
 export default function AddShowModal() {
   const { 
-    addEvent, 
-    updateEvent, 
-    isModalOpen, 
-    setIsModalOpen, 
-    selectedEvent, 
-    setSelectedEvent 
-  } = useEvents();
+    updateItem,
+    modalOpen,
+    setModalOpen,
+    selectedItem,
+    setSelectedItem,
+  } = useCine();
 
   const [title, setTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [type, setType] = useState<'movie' | 'show'>('movie');
-  const [season, setSeason] = useState('');
-  const [episode, setEpisode] = useState('');
+  const [season, setSeason] = useState('1');
+  const [episode, setEpisode] = useState('1');
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState('');
   const [notes, setNotes] = useState('');
@@ -49,7 +48,7 @@ export default function AddShowModal() {
   const [searchResults, setSearchResults] = useState<TMDbResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
-  const isEditMode = !!selectedEvent;
+  const isEditMode = !!selectedItem;
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
@@ -66,16 +65,19 @@ export default function AddShowModal() {
   );
 
   useEffect(() => {
-    debouncedSearch(searchQuery);
-  }, [searchQuery, debouncedSearch]);
+    // Prevent search when selecting an item that already has a title
+    if (searchQuery !== title) {
+      debouncedSearch(searchQuery);
+    }
+  }, [searchQuery, title, debouncedSearch]);
 
 
   const resetForm = () => {
     setTitle('');
     setSearchQuery('');
     setType('movie');
-    setSeason('');
-    setEpisode('');
+    setSeason('1');
+    setEpisode('1');
     setDate(new Date());
     setTime(formatDate(new Date(), 'HH:mm'));
     setNotes('');
@@ -84,48 +86,44 @@ export default function AddShowModal() {
   };
 
   useEffect(() => {
-    if (isModalOpen) {
-      if (selectedEvent) {
-        const eventDate = selectedEvent.dateTime ? new Date(selectedEvent.dateTime) : new Date();
-        const isShow = !!selectedEvent.episode;
+    if (modalOpen) {
+      if (selectedItem) {
+        const eventDate = selectedItem.scheduleDate ? new Date(selectedItem.scheduleDate) : new Date();
         
-        setTitle(selectedEvent.title || '');
-        setSearchQuery(selectedEvent.title || '');
-        setPosterUrl(selectedEvent.posterUrl || 'https://placehold.co/200x300.png');
-        setType(isShow ? 'show' : 'movie');
+        setTitle(selectedItem.title || '');
+        setSearchQuery(selectedItem.title || '');
+        setPosterUrl(selectedItem.posterUrl || 'https://placehold.co/200x300.png');
+        setType(selectedItem.type);
         
-        if (isShow && selectedEvent.episode) {
-            const match = selectedEvent.episode.match(/S(\d+)E(\d+)/);
-            if (match) {
-                setSeason(match[1]);
-                setEpisode(match[2]);
-            }
+        if (selectedItem.type === 'show' && selectedItem.progress) {
+          setSeason(String(selectedItem.progress.season));
+          setEpisode(String(selectedItem.progress.episode));
         } else {
-            setSeason('');
-            setEpisode('');
+            setSeason('1');
+            setEpisode('1');
         }
 
         setDate(eventDate);
         setTime(formatDate(eventDate, 'HH:mm'));
-        setNotes(selectedEvent.notes || '');
+        setNotes(selectedItem.notes || '');
       } else {
         resetForm();
       }
     }
-  }, [selectedEvent, isModalOpen]);
+  }, [selectedItem, modalOpen]);
 
   const handleSelectResult = (result: TMDbResult) => {
     const isShow = result.media_type === 'tv';
     const resultTitle = isShow ? result.name : result.title;
     setTitle(resultTitle);
-    setSearchQuery(resultTitle)
+    setSearchQuery(resultTitle);
     setPosterUrl(result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}`: 'https://placehold.co/200x300.png');
     setType(isShow ? 'show' : 'movie');
     setSearchResults([]);
   };
 
   const handleSubmit = () => {
-    if (!title || !date || !time) {
+    if (!title || !date || !time || !selectedItem) {
       // Basic validation
       alert("Please fill in all required fields.");
       return;
@@ -135,39 +133,34 @@ export default function AddShowModal() {
     const combinedDateTime = new Date(date);
     combinedDateTime.setHours(hours, minutes);
 
-    const eventData: Omit<Event, 'id' | 'dayOffset'> = {
+    const itemData: Partial<CineItem> = {
       title,
       posterUrl: posterUrl || 'https://placehold.co/200x300.png',
-      dateTime: combinedDateTime.toISOString(),
+      scheduleDate: combinedDateTime.toISOString(),
       notes,
-      aiHint: type === 'show' ? 'series' : 'movie',
-      ...(type === 'show' && { episode: `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}` }),
+      type,
+      status: 'scheduled',
+      ...(type === 'show' && { progress: { season: parseInt(season), episode: parseInt(episode) } }),
     };
 
-    if (isEditMode && selectedEvent) {
-      updateEvent({ ...eventData, id: selectedEvent.id, dayOffset: 0 });
-    } else {
-      addEvent({ ...eventData, dayOffset: 0});
-    }
-
-    setIsModalOpen(false);
+    updateItem(selectedItem.id, itemData);
+    handleClose();
   };
   
   const handleClose = () => {
-    setIsModalOpen(false);
-    setSelectedEvent(null);
+    setModalOpen(false);
+    setSelectedItem(null);
   };
 
-
   return (
-    <Dialog open={isModalOpen} onOpenChange={handleClose}>
+    <Dialog open={modalOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="font-headline">
-            {isEditMode ? "Edit Schedule" : "Add to Schedule"}
+            {isEditMode ? "Update Schedule" : "Add to Schedule"}
           </DialogTitle>
           <DialogDescription>
-            {isEditMode ? "Update the details for your scheduled event." : "Schedule a new movie or show to watch."}
+             Schedule a movie or show to watch.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">

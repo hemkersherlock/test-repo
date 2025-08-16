@@ -1,13 +1,13 @@
 
 import Image from 'next/image';
-import type { WatchingItem } from '@/lib/watching';
 import { Film, Tv, CheckCircle, ListPlus, PlayCircle } from 'lucide-react';
 import { Progress } from './ui/progress';
 import { Card } from './ui/card';
 import { cn } from '@/lib/utils';
+import type { CineItem } from '@/lib/types';
 
 interface WatchingCardProps {
-  item: WatchingItem;
+  item: CineItem;
   onClick?: () => void;
   layout?: 'vertical' | 'horizontal';
 }
@@ -18,23 +18,26 @@ export default function WatchingCard({ item, onClick, layout = 'vertical' }: Wat
     ...(onClick && { onClick, role: 'button', tabIndex: 0 }),
   };
 
+  const progressPercentage = item.progress?.current ?? 0;
+  const progressText = item.type === 'show' && item.progress ? `S${String(item.progress.season).padStart(2, '0')}E${String(item.progress.episode).padStart(2, '0')}` : '';
+
   const renderStatusDetails = () => {
     switch(item.status) {
       case 'watching':
         return (
           <div className='w-full'>
             <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground font-medium mb-1 truncate">{item.progressText}</p>
-              <p className="text-xs text-muted-foreground font-medium mb-1">{item.progress}%</p>
+              <p className="text-xs text-muted-foreground font-medium mb-1 truncate">{progressText}</p>
+              <p className="text-xs text-muted-foreground font-medium mb-1">{progressPercentage}%</p>
             </div>
-            <Progress value={item.progress} className="h-1" />
+            <Progress value={progressPercentage} className="h-1" />
           </div>
         );
-      case 'seen':
+      case 'completed':
         return (
            <div className="flex items-center gap-1.5 text-xs text-green-400">
               <CheckCircle className="w-3 h-3" />
-              <span>Watched</span>
+              <span>Completed</span>
             </div>
         );
       case 'watchlist':
@@ -44,11 +47,18 @@ export default function WatchingCard({ item, onClick, layout = 'vertical' }: Wat
               <span>On Watchlist</span>
             </div>
         );
+       case 'scheduled':
+         // Horizontal layout for "Watching" page shouldn't show scheduled items, but as a fallback:
+         return (
+            <div className="flex items-center gap-1.5 text-xs text-primary">
+              <ListPlus className="w-3 h-3" />
+              <span>Scheduled</span>
+            </div>
+         )
     }
   }
 
   if (layout === 'horizontal') {
-    // Horizontal layout for Seen/Watchlist/Watching on the Watching page
     return (
       <div 
         className={cn("flex items-center gap-4 p-2 rounded-lg hover:bg-card/80 transition-colors w-full", onClick && "cursor-pointer")}

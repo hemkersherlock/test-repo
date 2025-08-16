@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import type { Event } from "@/lib/events";
+import type { CineItem } from "@/lib/types";
 import { Search, Bell, Clapperboard, Calendar, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchTMDb, TMDbResult, getTrending } from "@/lib/tmdb";
@@ -11,16 +11,14 @@ import Image from "next/image";
 import SearchResultModal from "@/components/search-result-modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useEvents } from "@/context/events-context";
-import { useWatching } from "@/context/watching-context";
+import { useCine } from "@/context/cine-context";
 import EventCard from "@/components/event-card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import WatchingCard from "@/components/watching-card";
 import TrendingCard from "@/components/trending-card";
 
 export default function Home() {
-  const { events, setSelectedEvent, setIsModalOpen } = useEvents();
-  const { addWatchingItem, watchingItems } = useWatching();
+  const { items, setModalOpen, setSelectedItem } = useCine();
   const { toast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,14 +86,14 @@ export default function Home() {
     }
   };
   
-  const upcomingEvents = useMemo(() => events
-    .filter(event => new Date(event.dateTime) >= new Date())
-    .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
-    .slice(0, 5), [events]);
+  const upcomingEvents = useMemo(() => items
+    .filter(item => item.status === 'scheduled' && item.scheduleDate && new Date(item.scheduleDate) >= new Date())
+    .sort((a, b) => new Date(a.scheduleDate!).getTime() - new Date(b.scheduleDate!).getTime())
+    .slice(0, 5), [items]);
 
   const continueWatchingItems = useMemo(() => 
-    watchingItems.filter(item => item.status === 'watching' && item.progress > 0 && item.progress < 100), 
-  [watchingItems]);
+    items.filter(item => item.status === 'watching' && item.progress && item.progress.current > 0 && item.progress.current < 100), 
+  [items]);
 
   return (
     <>
@@ -156,9 +154,9 @@ export default function Home() {
               {upcomingEvents.length > 0 ? (
                 <ScrollArea className="w-full whitespace-nowrap">
                   <div className="flex w-max space-x-4 px-4">
-                    {upcomingEvents.map((event) => (
-                      <div key={event.id} className="w-32">
-                         <EventCard event={event} layout="vertical" onClick={() => { setSelectedEvent(event); setIsModalOpen(true); }} />
+                    {upcomingEvents.map((item) => (
+                      <div key={item.id} className="w-32">
+                         <EventCard event={item} layout="vertical" onClick={() => { setSelectedItem(item); setModalOpen(true); }} />
                       </div>
                     ))}
                   </div>

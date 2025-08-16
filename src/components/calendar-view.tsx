@@ -9,21 +9,18 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EventCard from "@/components/event-card";
-import type { Event } from "@/lib/events";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { useEvents } from "@/context/events-context";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
-import Image from "next/image";
+import { useCine } from "@/context/cine-context";
+import type { CineItem } from "@/lib/types";
 
 function EventIndicator() {
   return <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary" />;
 }
 
 export default function CalendarView() {
-  const { events, setSelectedEvent, setIsModalOpen } = useEvents();
+  const { items, setModalOpen, setSelectedItem } = useCine();
   const [date, setDate] = useState<Date | undefined>();
-  const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
   
   useEffect(() => {
     // Set initial date only on the client to avoid hydration mismatch
@@ -33,36 +30,29 @@ export default function CalendarView() {
   }, [date]);
   
   const eventsByDate = useMemo(() => {
-    const map = new Map<number, Event[]>();
-    events.forEach(event => {
-      const day = startOfDay(new Date(event.dateTime)).getTime();
-      if (!map.has(day)) {
-        map.set(day, []);
-      }
-      map.get(day)!.push(event);
+    const map = new Map<number, CineItem[]>();
+    items
+      .filter(item => item.status === 'scheduled' && item.scheduleDate)
+      .forEach(item => {
+        const day = startOfDay(new Date(item.scheduleDate!)).getTime();
+        if (!map.has(day)) {
+          map.set(day, []);
+        }
+        map.get(day)!.push(item);
     });
     return map;
-  }, [events]);
+  }, [items]);
 
   const eventDays = useMemo(() => {
     return Array.from(eventsByDate.keys()).map(time => new Date(time));
   }, [eventsByDate]);
   
   const selectedDateEvents = date ? eventsByDate.get(startOfDay(date).getTime()) || [] : [];
-  selectedDateEvents.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+  selectedDateEvents.sort((a, b) => new Date(a.scheduleDate!).getTime() - new Date(b.scheduleDate!).getTime());
 
-  const handleEventClick = (event: Event) => {
-    setSelectedEvent(event);
-    setIsModalOpen(true);
-  };
-  
-  const handleGetSuggestion = async () => {
-    // Placeholder function
-    setIsLoadingSuggestion(true);
-    setTimeout(() => {
-      alert("AI Suggestions are currently unavailable in the mobile app version.");
-      setIsLoadingSuggestion(false);
-    }, 1000);
+  const handleEventClick = (event: CineItem) => {
+    setSelectedItem(event);
+    setModalOpen(true);
   };
 
   if (!date) {
@@ -139,19 +129,7 @@ export default function CalendarView() {
               ))
             ) : (
                <div className="text-center py-8">
-                  {isLoadingSuggestion ? (
-                     <div className="flex flex-col items-center gap-4 text-muted-foreground">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p>Finding a new show for you...</p>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-muted-foreground">Nothing scheduled for this day.</p>
-                      <Button variant="default" className="mt-4" onClick={handleGetSuggestion}>
-                        Get Suggestion
-                      </Button>
-                    </>
-                  )}
+                  <p className="text-muted-foreground">Nothing scheduled for this day.</p>
               </div>
             )}
           </div>

@@ -6,14 +6,18 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AddShowModal from "@/components/add-show-modal";
 import BottomNav from "@/components/bottom-nav";
-import { useEvents } from "@/context/events-context";
+import { useCine } from "@/context/cine-context";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AppLayoutClient({ children }: { children: ReactNode }) {
-  const { setIsModalOpen, setSelectedEvent } = useEvents();
+  const { setModalOpen, setSelectedItem } = useCine();
+  const { toast } = useToast();
 
   const openAddModal = () => {
-    setSelectedEvent(null);
-    setIsModalOpen(true);
+    toast({
+        title: "Search for a show",
+        description: "You can only schedule items that have been added from the search results.",
+    });
   };
 
   return (

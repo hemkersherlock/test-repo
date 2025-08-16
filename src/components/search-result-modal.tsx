@@ -12,9 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { TMDbResult } from "@/lib/tmdb";
-import { useEvents } from "@/context/events-context";
-import { useWatching } from "@/context/watching-context";
+import { useCine } from "@/context/cine-context";
 import { ScrollArea } from "./ui/scroll-area";
+import type { CineItem } from "@/lib/types";
 
 interface SearchResultModalProps {
   isOpen: boolean;
@@ -23,40 +23,40 @@ interface SearchResultModalProps {
 }
 
 export default function SearchResultModal({ isOpen, onClose, result }: SearchResultModalProps) {
-  const { setSelectedEvent, setIsModalOpen } = useEvents();
-  const { addWatchingItem } = useWatching();
+  const { addItem, setModalOpen, setSelectedItem } = useCine();
 
   const handleSchedule = () => {
-    // This will open the AddShowModal with pre-filled data
-    const isShow = result.media_type === 'tv';
-    
-    // Create a mock event object to pass to the context
-    // The AddShowModal will use this to pre-populate its fields
-    const mockEvent = {
-        id: result.id, // Use TMDb id temporarily
-        title: result.title || result.name,
-        posterUrl: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : 'https://placehold.co/200x300.png',
-        dateTime: new Date().toISOString(),
-        episode: isShow ? 'S01E01' : undefined,
-        aiHint: isShow ? 'series' : 'movie',
-        dayOffset: 0,
-    };
-    
-    setSelectedEvent(mockEvent);
-    onClose(); // Close this modal
-    setIsModalOpen(true); // Open the other modal
+    const newItem = createCineItem('scheduled');
+    setSelectedItem(newItem);
+    onClose(); 
+    setModalOpen(true);
   };
 
   const handleTrack = () => {
-    addWatchingItem(result, 'watching');
+    const newItem = createCineItem('watching');
+    addItem(newItem);
     onClose();
   };
 
   const handleWatchlist = () => {
-    addWatchingItem(result, 'watchlist');
+    const newItem = createCineItem('watchlist');
+    addItem(newItem);
     onClose();
   };
   
+  const createCineItem = (status: CineItem['status']): CineItem => {
+    const isShow = result.media_type === 'tv';
+    return {
+      id: String(result.id),
+      title: result.title || result.name,
+      posterUrl: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : 'https://placehold.co/200x300.png',
+      type: isShow ? 'show' : 'movie',
+      status: status,
+      ...(status === 'scheduled' && { scheduleDate: new Date().toISOString() }),
+      ...(isShow && { progress: { season: 1, episode: 1, current: 0 } }),
+    };
+  };
+
   const year = result.release_date?.substring(0, 4) || result.first_air_date?.substring(0, 4) || 'N/A';
 
   return (
