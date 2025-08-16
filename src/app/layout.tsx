@@ -1,10 +1,11 @@
+
 import type {Metadata} from 'next';
 import { Poppins, PT_Sans } from 'next/font/google'
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import BottomNav from '@/components/bottom-nav';
-import { EventsProvider } from '@/context/events-context';
 import AppLayoutClient from '@/components/app-layout-client';
+import { EventsProvider } from '@/context/events-context';
+import { WatchingProvider } from '@/context/watching-context';
 
 export const metadata: Metadata = {
   title: 'CineSchedule',
@@ -38,10 +39,12 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.variable} ${ptSans.variable} font-body antialiased bg-background`}>
         <EventsProvider>
-          <AppLayoutClient>
-            {children}
-          </AppLayoutClient>
-          <Toaster />
+          <WatchingProvider>
+            <AppLayoutClient>
+              {children}
+            </AppLayoutClient>
+            <Toaster />
+          </WatchingProvider>
         </EventsProvider>
       </body>
     </html>

@@ -5,6 +5,9 @@ export interface TMDbResult {
   name: string;
   poster_path: string;
   media_type: 'movie' | 'tv';
+  overview: string;
+  release_date: string;
+  first_air_date: string;
 }
 
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
@@ -15,8 +18,8 @@ export async function searchTMDb(query: string): Promise<TMDbResult[]> {
     console.warn("TMDb API key is not configured in .env.local. Please add NEXT_PUBLIC_TMDB_API_KEY.");
     // Return mock data if API key is not available
     return [
-      { id: 1, title: 'Blade Runner 2049 (Add API Key to see real data)', name: '', poster_path: '/gajva2L0rPYkEWjzgFlBgrSA6E.jpg', media_type: 'movie' },
-      { id: 2, title: '', name: 'Stranger Things (Add API Key to see real data)', poster_path: '/56v2KjBlU4KZQl6seS8S8erBsBI.jpg', media_type: 'tv' }
+      { id: 1, title: 'Blade Runner 2049 (Add API Key to see real data)', name: '', poster_path: '/gajva2L0rPYkEWjzgFlBgrSA6E.jpg', media_type: 'movie', overview: 'A young blade runner\'s discovery of a long-buried secret leads him to track down former blade runner Rick Deckard, who\'s been missing for thirty years.', release_date: '2017-10-04', first_air_date: '' },
+      { id: 2, title: '', name: 'Stranger Things (Add API Key to see real data)', poster_path: '/56v2KjBlU4KZQl6seS8S8erBsBI.jpg', media_type: 'tv', overview: 'When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces, and one strange little girl.', release_date: '', first_air_date: '2016-07-15' }
     ];
   }
 

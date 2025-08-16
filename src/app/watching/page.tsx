@@ -8,63 +8,7 @@ import type { WatchingItem } from "@/lib/watching";
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const dummyWatchingData: WatchingItem[] = [
-  {
-    id: 1,
-    title: "House of the Dragon",
-    progress: 85,
-    posterUrl: "https://image.tmdb.org/t/p/w500/zDb5dFwB4ea3aKVxQk1B2kzbCjE.jpg",
-    type: "show",
-    progressText: "S02E01",
-    status: "watching",
-  },
-  {
-    id: 2,
-    title: "The Boys",
-    progress: 50,
-    posterUrl: "https://image.tmdb.org/t/p/w500/2zmTngn1tJycAZB2aB6bI7EBQ5J.jpg",
-    type: "show",
-    progressText: "S04E04",
-    status: "watching",
-  },
-  {
-    id: 3,
-    title: "Poor Things",
-    progress: 100,
-    posterUrl: "https://image.tmdb.org/t/p/w500/kCGlIMrg8PzGpqefndqvLGww6I5.jpg",
-    type: "movie",
-    progressText: "Watched",
-    status: "seen",
-  },
-  {
-    id: 5,
-    title: "The Matrix",
-    progress: 100,
-    posterUrl: "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
-    type: "movie",
-    progressText: "Watched",
-    status: "seen",
-  },
-  {
-    id: 4,
-    title: "Arcane",
-    progress: 0,
-    posterUrl: "https://image.tmdb.org/t/p/w500/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg",
-    type: "show",
-    progressText: "S01E01",
-    status: "watchlist",
-  },
-  {
-    id: 6,
-    title: "Fallout",
-    progress: 0,
-    posterUrl: "https://image.tmdb.org/t/p/w500/gO9k7t9iQnFVjD2zh2nQo1i2a2M.jpg",
-    type: "show",
-    progressText: "S01E01",
-    status: "watchlist",
-  },
-];
+import { useWatching } from '@/context/watching-context';
 
 type Status = 'watchlist' | 'watching' | 'seen';
 
@@ -94,15 +38,16 @@ const TabButton = ({
 
 export default function WatchingPage() {
   const [activeTab, setActiveTab] = useState<Status>('watching');
+  const { watchingItems } = useWatching();
 
-  const watchingItems = dummyWatchingData.filter(item => item.status === 'watching');
-  const seenItems = dummyWatchingData.filter(item => item.status === 'seen');
-  const watchlistItems = dummyWatchingData.filter(item => item.status === 'watchlist');
+  const watchingFiltered = watchingItems.filter(item => item.status === 'watching');
+  const seenFiltered = watchingItems.filter(item => item.status === 'seen');
+  const watchlistFiltered = watchingItems.filter(item => item.status === 'watchlist');
 
   const tabs: { id: Status; label: string; items: WatchingItem[] }[] = [
-    { id: 'watching', label: 'Watching', items: watchingItems },
-    { id: 'seen', label: 'Seen', items: seenItems },
-    { id: 'watchlist', label: 'Watchlist', items: watchlistItems },
+    { id: 'watching', label: 'Watching', items: watchingFiltered },
+    { id: 'seen', label: 'Seen', items: seenFiltered },
+    { id: 'watchlist', label: 'Watchlist', items: watchlistFiltered },
   ];
   
   const activeItems = tabs.find(tab => tab.id === activeTab)?.items || [];
@@ -114,7 +59,7 @@ export default function WatchingPage() {
           <h1 className="text-3xl font-headline font-bold text-center">My Lists</h1>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Shows, movies..." className="pl-10" />
+            <Input placeholder="Filter your lists..." className="pl-10" />
           </div>
         </header>
         
