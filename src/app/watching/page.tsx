@@ -11,7 +11,6 @@ import { useCine } from '@/context/cine-context';
 import UpdateProgressModal from '@/components/update-progress-modal';
 import type { CineItem, Status } from '@/lib/types';
 import EmptyState from '@/components/empty-state';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const TabButton = ({
   label,
@@ -32,7 +31,7 @@ const TabButton = ({
     )}
   >
     {label} ({count})
-    {isActive && <motion.div layoutId="underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+    {isActive && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
   </button>
 );
 
@@ -97,50 +96,27 @@ export default function WatchingPage() {
 
           <ScrollArea className="h-[calc(100vh-136px-48px-64px)]">
             <div className="p-4 pb-24">
-              <AnimatePresence mode="wait">
-                {activeItems.length > 0 ? (
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="space-y-1"
-                  >
-                    <AnimatePresence>
-                      {activeItems.map((item) => (
-                        <motion.div
-                          key={item.id}
-                          layout
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0, margin: 0, padding: 0 }}
-                          transition={{ duration: 0.3, ease: "easeInOut" }}
-                        >
-                          <WatchingCard 
-                            item={item} 
-                            layout="horizontal" 
-                            onClick={() => handleItemClick(item)}
-                          />
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </motion.div>
+              {activeItems.length > 0 ? (
+                  <div className="space-y-1">
+                    {activeItems.map((item) => (
+                      <div key={item.id}>
+                        <WatchingCard 
+                          item={item} 
+                          layout="horizontal" 
+                          onClick={() => handleItemClick(item)}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <motion.div
-                     key={`${activeTab}-empty`}
-                     initial={{ opacity: 0, scale: 0.95 }}
-                     animate={{ opacity: 1, scale: 1 }}
-                     transition={{ duration: 0.3 }}
-                  >
+                  <div>
                     <EmptyState
                       icon={activeTabInfo.icon}
                       title={activeTabInfo.empty.title}
                       description={activeTabInfo.empty.desc}
                     />
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
               </div>
           </ScrollArea>
         </div>

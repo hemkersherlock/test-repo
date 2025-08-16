@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { CineItem } from "@/lib/types";
-import { Search, Bell, Clapperboard, Calendar, TrendingUp, Film } from "lucide-react";
+import { Search, Bell, Clapperboard, Calendar, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchTMDb, TMDbResult, getTrending } from "@/lib/tmdb";
 import { debounce } from "lodash";
@@ -28,20 +28,19 @@ export default function Home() {
   const [selectedResult, setSelectedResult] = useState<TMDbResult | null>(null);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
   const [trendingItems, setTrendingItems] = useState<TMDbResult[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<CineItem[]>([]);
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pageTopRef = useRef<HTMLDivElement>(null);
 
-  // Filter and sort upcoming events on the client side to prevent hydration errors
-  useEffect(() => {
+  // Memoize upcoming events to prevent expensive recalculations on every render
+  const upcomingEvents = useMemo(() => {
     const now = new Date();
-    const futureEvents = items
+    return items
       .filter(item => item.status === 'scheduled' && item.scheduleDate && new Date(item.scheduleDate) >= now)
       .sort((a, b) => new Date(a.scheduleDate!).getTime() - new Date(b.scheduleDate!).getTime())
       .slice(0, 5);
-    setUpcomingEvents(futureEvents);
   }, [items]);
+
 
   // Handle FAB click action
   useEffect(() => {
@@ -164,9 +163,7 @@ export default function Home() {
             </div>
           </header>
           
-          {/* Main content area */}
           <div className="pb-24 space-y-8">
-            {/* Upcoming Widget */}
             <section>
               <h2 className="text-lg font-headline font-semibold px-4 pb-2 pt-4 flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
@@ -192,7 +189,6 @@ export default function Home() {
               )}
             </section>
 
-            {/* Continue Watching */}
             {continueWatchingItems.length > 0 && (
               <section>
                 <h2 className="text-lg font-headline font-semibold px-4 pb-2 flex items-center gap-2">
@@ -212,7 +208,6 @@ export default function Home() {
               </section>
             )}
 
-            {/* Trending Row */}
             {trendingItems.length > 0 && (
               <section>
                  <h2 className="text-lg font-headline font-semibold px-4 pb-2 flex items-center gap-2">
