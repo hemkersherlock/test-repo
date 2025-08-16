@@ -1,7 +1,15 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
-import { getAuth, Auth, initializeAuth, indexedDBLocalPersistence } from "firebase/auth";
+import { 
+  getAuth, 
+  Auth, 
+  initializeAuth, 
+  browserLocalPersistence, 
+  browserPopupRedirectResolver,
+  indexedDBLocalPersistence,
+  inMemoryPersistence
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,10 +25,12 @@ const firebaseConfig = {
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db: Firestore = getFirestore(app);
 
-// Initialize Firebase Auth with persistence
-// This check is crucial for Next.js to handle server-side and client-side correctly.
+// Conditionally initialize Auth for browser or server environment
 const auth: Auth = typeof window !== 'undefined' 
-  ? initializeAuth(app, { persistence: indexedDBLocalPersistence }) 
+  ? initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence],
+      popupRedirectResolver: browserPopupRedirectResolver,
+    })
   : getAuth(app);
 
 
