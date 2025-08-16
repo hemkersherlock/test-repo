@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp, FirebaseOptions, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
-import { getAuth, Auth } from "firebase/auth";
+import { getAuth, Auth, initializeAuth, indexedDBLocalPersistence } from "firebase/auth";
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,9 +13,15 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
+// Initialize Firebase for SSR
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
 const db: Firestore = getFirestore(app);
-const auth: Auth = getAuth(app);
+
+// Initialize Firebase Auth with persistence
+const auth: Auth = typeof window !== 'undefined' 
+  ? initializeAuth(app, { persistence: indexedDBLocalPersistence }) 
+  : getAuth(app);
+
 
 export { app, db, auth };
