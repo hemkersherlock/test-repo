@@ -15,7 +15,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
 const db: Firestore = getFirestore(app);
 
 // Initialize Firebase Auth with persistence
