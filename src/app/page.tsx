@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type { Event } from "@/lib/events";
 import { Search, Bell, Clapperboard, Calendar, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -31,13 +31,13 @@ export default function Home() {
   const [trendingItems, setTrendingItems] = useState<TMDbResult[]>([]);
 
   // Fetch trending items on component mount
-  useState(() => {
+  useEffect(() => {
     const fetchTrending = async () => {
       const items = await getTrending();
       setTrendingItems(items);
     };
     fetchTrending();
-  });
+  }, []);
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
