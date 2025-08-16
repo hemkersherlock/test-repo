@@ -17,6 +17,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import WatchingCard from "@/components/watching-card";
 import TrendingCard from "@/components/trending-card";
 import EmptyState from "@/components/empty-state";
+import { startOfDay } from "date-fns";
 
 export default function Home() {
   const { items, setModalOpen, setSelectedItem, fabAction, setFabAction } = useCine();
@@ -34,9 +35,14 @@ export default function Home() {
 
   // Memoize upcoming events to prevent expensive recalculations on every render
   const upcomingEvents = useMemo(() => {
-    const now = new Date();
+    // Use startOfDay to compare dates without being affected by time
+    const today = startOfDay(new Date());
     return items
-      .filter(item => item.status === 'scheduled' && item.scheduleDate && new Date(item.scheduleDate) >= now)
+      .filter(item => 
+        item.status === 'scheduled' && 
+        item.scheduleDate && 
+        startOfDay(new Date(item.scheduleDate)) >= today
+      )
       .sort((a, b) => new Date(a.scheduleDate!).getTime() - new Date(b.scheduleDate!).getTime())
       .slice(0, 5);
   }, [items]);
