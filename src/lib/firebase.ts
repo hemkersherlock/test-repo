@@ -13,24 +13,9 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-let app: FirebaseApp;
-let db: Firestore;
-let auth: Auth;
-
-// Check if all necessary keys are present before initializing
-if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  db = getFirestore(app);
-  auth = getAuth(app);
-} else {
-  console.error("Firebase configuration is missing or incomplete. Please check your .env.local file.");
-  // Provide dummy instances to prevent crashing the app, while logging the error.
-  // @ts-ignore
-  app = {}; 
-  // @ts-ignore
-  db = {};
-  // @ts-ignore
-  auth = {};
-}
+// Initialize Firebase
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db: Firestore = getFirestore(app);
+const auth: Auth = getAuth(app);
 
 export { app, db, auth };
