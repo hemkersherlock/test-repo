@@ -15,6 +15,7 @@ import { TMDbResult } from "@/lib/tmdb";
 import { useCine } from "@/context/cine-context";
 import { ScrollArea } from "./ui/scroll-area";
 import type { CineItem } from "@/lib/types";
+import { Timestamp } from "firebase/firestore";
 
 interface SearchResultModalProps {
   isOpen: boolean;
@@ -27,9 +28,12 @@ export default function SearchResultModal({ isOpen, onClose, result }: SearchRes
 
   const handleSchedule = () => {
     const newItem = createCineItem('scheduled');
-    setSelectedItem(newItem);
-    onClose(); 
-    setModalOpen(true);
+    // We add the item directly here to create the document in Firestore first
+    addItem(newItem).then(() => {
+        setSelectedItem(newItem);
+        onClose(); 
+        setModalOpen(true);
+    });
   };
 
   const handleTrack = () => {
@@ -52,6 +56,7 @@ export default function SearchResultModal({ isOpen, onClose, result }: SearchRes
       posterUrl: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : 'https://placehold.co/200x300.png',
       type: isShow ? 'show' : 'movie',
       status: status,
+      createdAt: Timestamp.now().toMillis().toString(),
       ...(status === 'scheduled' && { scheduleDate: new Date().toISOString() }),
       ...(isShow && { progress: { season: 1, episode: 1, current: 0 } }),
     };

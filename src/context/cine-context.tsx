@@ -3,14 +3,15 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, writeBatch, Timestamp } from 'firebase/firestore';
 import type { CineItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { mockCineData } from '@/lib/mock-data';
+import { useAuth } from './auth-context';
 
 interface CineContextType {
   items: CineItem[];
-  addItem: (item: CineItem) => Promise<void>;
+  addItem: (item: Partial<CineItem>) => Promise<void>;
   updateItem: (id: string, data: Partial<CineItem>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   modalOpen: boolean;
@@ -25,10 +26,12 @@ interface CineContextType {
 
 const CineContext = createContext<CineContextType | undefined>(undefined);
 
-const COLLECTION_NAME = 'cineItems';
+const COLLECTION_NAME = 'media';
+const USERS_COLLECTION = 'users';
 
 export function CineProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [items, setItems] = useState<CineItem[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
@@ -36,35 +39,50 @@ export function CineProvider({ children }: { children: ReactNode }) {
   const [fabAction, setFabAction] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, COLLECTION_NAME), 
+    if (!user) {
+      setItems([]);
+      return;
+    }
+
+    const userMediaCollection = collection(db, USERS_COLLECTION, user.uid, COLLECTION_NAME);
+    
+    const unsubscribe = onSnapshot(userMediaCollection, 
       (snapshot) => {
         const data = snapshot.docs.map(doc => ({ ...doc.data() } as CineItem));
-        
-        if (data.length === 0 && process.env.NODE_ENV !== 'production') {
-          console.log("Firestore is empty, seeding with mock data...");
-          const batch = writeBatch(db);
-          mockCineData.forEach((item) => {
-            const docRef = doc(db, COLLECTION_NAME, item.id);
-            batch.set(docRef, item);
-          });
-          batch.commit().then(() => console.log("Mock data seeded."));
-        } else {
-          setItems(data);
-        }
+        setItems(data);
       },
       (error) => {
-        console.error("Error fetching Firestore collection: ", error);
+        console.error("Error fetching user's media collection: ", error);
         toast({ title: "Error", description: "Could not connect to the database.", variant: "destructive" });
       }
     );
     
     return () => unsubscribe();
-  }, [toast]);
+  }, [user, toast]);
 
-  const addItem = async (item: CineItem) => {
+  const addItem = async (item: Partial<CineItem>) => {
+    if (!user) {
+      toast({ title: "Error", description: "You must be logged in to add items.", variant: "destructive" });
+      return;
+    }
+    if (!item.id) {
+      toast({ title: "Error", description: "Cannot add an item without an ID.", variant: "destructive" });
+      return;
+    }
+
+    const newItem: CineItem = {
+      ...item,
+      id: item.id,
+      title: item.title || 'Untitled',
+      type: item.type || 'movie',
+      status: item.status || 'watchlist',
+      posterUrl: item.posterUrl || '',
+      createdAt: Timestamp.now().toMillis().toString(),
+    };
+
     try {
-      await setDoc(doc(db, COLLECTION_NAME, item.id), item, { merge: true });
-      toast({ title: "Success", description: `${item.title} has been added.` });
+      await setDoc(doc(db, USERS_COLLECTION, user.uid, COLLECTION_NAME, newItem.id), newItem, { merge: true });
+      toast({ title: "Success", description: `${newItem.title} has been added.` });
     } catch (error) {
       console.error("Error adding document: ", error);
       toast({ title: "Error", description: "Could not add the item.", variant: "destructive" });
@@ -72,8 +90,12 @@ export function CineProvider({ children }: { children: ReactNode }) {
   };
 
   const updateItem = async (id: string, data: Partial<CineItem>) => {
+     if (!user) {
+      toast({ title: "Error", description: "You must be logged in to update items.", variant: "destructive" });
+      return;
+    }
     try {
-      await updateDoc(doc(db, COLLECTION_NAME, id), data);
+      await updateDoc(doc(db, USERS_COLLECTION, user.uid, COLLECTION_NAME, id), data);
       toast({ title: "Updated", description: "Item has been updated successfully." });
     } catch (error) {
       console.error("Error updating document: ", error);
@@ -82,8 +104,12 @@ export function CineProvider({ children }: { children: ReactNode }) {
   };
   
   const deleteItem = async (id: string) => {
+     if (!user) {
+      toast({ title: "Error", description: "You must be logged in to delete items.", variant: "destructive" });
+      return;
+    }
     try {
-      await deleteDoc(doc(db, COLLECTION_NAME, id));
+      await deleteDoc(doc(db, USERS_COLLECTION, user.uid, COLLECTION_NAME, id));
       toast({ title: "Deleted", description: "Item has been removed." });
     } catch (error) {
       console.error("Error deleting document: ", error);

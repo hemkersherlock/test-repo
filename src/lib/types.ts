@@ -7,6 +7,7 @@ export interface CineItem {
   type: 'show' | 'movie';
   status: Status;
   scheduleDate?: string; // ISO string
+  createdAt: string; // ISO string from Timestamp
   posterUrl: string;
   progress?: {
     season: number;
