@@ -1,7 +1,7 @@
 
-import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApps, getApp, FirebaseOptions, FirebaseApp } from "firebase/app";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getAuth, Auth } from "firebase/auth";
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,18 +13,24 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Filter out any undefined or empty values from the config
-const cleanedFirebaseConfig = Object.entries(firebaseConfig)
-  .filter(([, value]) => !!value)
-  .reduce((obj, [key, value]) => {
-    obj[key as keyof FirebaseOptions] = value;
-    return obj;
-  }, {} as FirebaseOptions);
+let app: FirebaseApp;
+let db: Firestore;
+let auth: Auth;
 
-
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(cleanedFirebaseConfig) : getApp();
-const db = getFirestore(app);
-const auth = getAuth(app);
+// Check if all necessary keys are present before initializing
+if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  db = getFirestore(app);
+  auth = getAuth(app);
+} else {
+  console.error("Firebase configuration is missing or incomplete. Please check your .env.local file.");
+  // Provide dummy instances to prevent crashing the app, while logging the error.
+  // @ts-ignore
+  app = {}; 
+  // @ts-ignore
+  db = {};
+  // @ts-ignore
+  auth = {};
+}
 
 export { app, db, auth };
