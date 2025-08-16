@@ -10,9 +10,6 @@ const withPWA = createPWA({
 const nextConfig: NextConfig = {
   /* config options here */
   swcMinify: true,
-  compiler: {
-    // This is the key change to avoid Babel conflicts with Expo
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
