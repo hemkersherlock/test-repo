@@ -19,6 +19,8 @@ interface CineContextType {
   setUpdateModalOpen: Dispatch<SetStateAction<boolean>>;
   selectedItem: CineItem | null;
   setSelectedItem: Dispatch<SetStateAction<CineItem | null>>;
+  fabAction: boolean;
+  setFabAction: Dispatch<SetStateAction<boolean>>;
 }
 
 const CineContext = createContext<CineContextType | undefined>(undefined);
@@ -31,14 +33,14 @@ export function CineProvider({ children }: { children: ReactNode }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CineItem | null>(null);
+  const [fabAction, setFabAction] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, COLLECTION_NAME), 
       (snapshot) => {
         const data = snapshot.docs.map(doc => ({ ...doc.data() } as CineItem));
         
-        // One-time seeding of mock data if the collection is empty
-        if (data.length === 0) {
+        if (data.length === 0 && process.env.NODE_ENV !== 'production') {
           console.log("Firestore is empty, seeding with mock data...");
           const batch = writeBatch(db);
           mockCineData.forEach((item) => {
@@ -99,7 +101,9 @@ export function CineProvider({ children }: { children: ReactNode }) {
     updateModalOpen,
     setUpdateModalOpen,
     selectedItem,
-    setSelectedItem
+    setSelectedItem,
+    fabAction,
+    setFabAction
   };
 
   return (

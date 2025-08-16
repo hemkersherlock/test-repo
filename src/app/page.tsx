@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { CineItem } from "@/lib/types";
 import { Search, Bell, Clapperboard, Calendar, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import WatchingCard from "@/components/watching-card";
 import TrendingCard from "@/components/trending-card";
 
 export default function Home() {
-  const { items, setModalOpen, setSelectedItem } = useCine();
+  const { items, setModalOpen, setSelectedItem, fabAction, setFabAction } = useCine();
   const { toast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +27,19 @@ export default function Home() {
   const [selectedResult, setSelectedResult] = useState<TMDbResult | null>(null);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
   const [trendingItems, setTrendingItems] = useState<TMDbResult[]>([]);
+  
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const pageTopRef = useRef<HTMLDivElement>(null);
+
+  // Handle FAB click action
+  useEffect(() => {
+    if (fabAction) {
+      pageTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+      searchInputRef.current?.focus();
+      setFabAction(false); // Reset the action
+    }
+  }, [fabAction, setFabAction]);
+
 
   // Fetch trending items on component mount
   useEffect(() => {
@@ -97,7 +110,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="flex justify-center min-h-full">
+      <div ref={pageTopRef} className="flex justify-center min-h-full">
         <div className="w-full max-w-lg">
           <header className="p-4 pt-8 sticky top-0 bg-background/80 backdrop-blur-sm z-20 flex flex-col gap-4">
             <div className="flex justify-between items-center">
@@ -109,6 +122,7 @@ export default function Home() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
+                ref={searchInputRef}
                 placeholder="Search movies & shows..." 
                 className="pl-10" 
                 value={searchQuery}

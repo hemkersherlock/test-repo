@@ -2,22 +2,31 @@
 "use client";
 
 import { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AddShowModal from "@/components/add-show-modal";
 import BottomNav from "@/components/bottom-nav";
 import { useCine } from "@/context/cine-context";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+
 
 export default function AppLayoutClient({ children }: { children: ReactNode }) {
-  const { setModalOpen, setSelectedItem } = useCine();
-  const { toast } = useToast();
+  const { setFabAction } = useCine();
+  const pathname = usePathname();
+  const router = useRouter();
 
-  const openAddModal = () => {
-    toast({
-        title: "Search for a show",
-        description: "You can only schedule items that have been added from the search results.",
-    });
+  const handleFabClick = () => {
+    // If we're on the home page, trigger the focus action
+    if (pathname === '/') {
+      setFabAction(true);
+    } else {
+      // If we're on another page, navigate to home and then the action will be triggered
+      router.push('/');
+      // A small delay to allow navigation before setting the action
+      setTimeout(() => setFabAction(true), 100);
+    }
   };
 
   return (
@@ -29,7 +38,7 @@ export default function AppLayoutClient({ children }: { children: ReactNode }) {
       <Button
         className="fixed bottom-24 right-6 h-16 w-16 rounded-full shadow-lg z-40 bg-primary hover:bg-primary/90"
         size="icon"
-        onClick={openAddModal}
+        onClick={handleFabClick}
         aria-label="Add new show"
       >
         <Plus className="h-8 w-8" />
