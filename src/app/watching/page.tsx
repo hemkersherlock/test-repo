@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWatching } from '@/context/watching-context';
+import UpdateProgressModal from '@/components/update-progress-modal';
 
 type Status = 'watchlist' | 'watching' | 'seen';
 
@@ -38,7 +39,16 @@ const TabButton = ({
 
 export default function WatchingPage() {
   const [activeTab, setActiveTab] = useState<Status>('watching');
-  const { watchingItems } = useWatching();
+  const { 
+    watchingItems,
+    setSelectedWatchingItem,
+    setIsUpdateModalOpen
+  } = useWatching();
+
+  const handleItemClick = (item: WatchingItem) => {
+    setSelectedWatchingItem(item);
+    setIsUpdateModalOpen(true);
+  };
 
   const watchingFiltered = watchingItems.filter(item => item.status === 'watching');
   const seenFiltered = watchingItems.filter(item => item.status === 'seen');
@@ -53,36 +63,44 @@ export default function WatchingPage() {
   const activeItems = tabs.find(tab => tab.id === activeTab)?.items || [];
 
   return (
-    <div className="flex justify-center min-h-full">
-      <div className="w-full max-w-lg">
-        <header className="p-4 pt-8 sticky top-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col gap-4">
-          <h1 className="text-3xl font-headline font-bold text-center">My Lists</h1>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Filter your lists..." className="pl-10" />
-          </div>
-        </header>
-        
-        <nav className="flex justify-around items-center h-12 border-b border-border px-4 sticky top-[136px] bg-background/80 backdrop-blur-sm z-10">
-          {tabs.map(tab => (
-            <TabButton
-              key={tab.id}
-              label={tab.label}
-              count={tab.items.length}
-              isActive={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
-            />
-          ))}
-        </nav>
-
-        <ScrollArea className="h-[calc(100vh-136px-48px-64px)]">
-           <div className="space-y-1 p-4 pb-24">
-              {activeItems.map((item) => (
-                  <WatchingCard key={item.id} item={item} layout="horizontal" />
-              ))}
+    <>
+      <div className="flex justify-center min-h-full">
+        <div className="w-full max-w-lg">
+          <header className="p-4 pt-8 sticky top-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col gap-4">
+            <h1 className="text-3xl font-headline font-bold text-center">My Lists</h1>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Filter your lists..." className="pl-10" />
             </div>
-        </ScrollArea>
+          </header>
+          
+          <nav className="flex justify-around items-center h-12 border-b border-border px-4 sticky top-[136px] bg-background/80 backdrop-blur-sm z-10">
+            {tabs.map(tab => (
+              <TabButton
+                key={tab.id}
+                label={tab.label}
+                count={tab.items.length}
+                isActive={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+              />
+            ))}
+          </nav>
+
+          <ScrollArea className="h-[calc(100vh-136px-48px-64px)]">
+            <div className="space-y-1 p-4 pb-24">
+                {activeItems.map((item) => (
+                    <WatchingCard 
+                      key={item.id} 
+                      item={item} 
+                      layout="horizontal" 
+                      onClick={() => handleItemClick(item)}
+                    />
+                ))}
+              </div>
+          </ScrollArea>
+        </div>
       </div>
-    </div>
+      <UpdateProgressModal />
+    </>
   );
 }

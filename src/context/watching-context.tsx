@@ -11,6 +11,10 @@ interface WatchingContextType {
   addWatchingItem: (item: TMDbResult, status: 'watching' | 'watchlist') => void;
   updateWatchingItem: (item: WatchingItem) => void;
   deleteWatchingItem: (id: number) => void;
+  isUpdateModalOpen: boolean;
+  setIsUpdateModalOpen: Dispatch<SetStateAction<boolean>>;
+  selectedWatchingItem: WatchingItem | null;
+  setSelectedWatchingItem: Dispatch<SetStateAction<WatchingItem | null>>;
 }
 
 const WatchingContext = createContext<WatchingContextType | undefined>(undefined);
@@ -20,6 +24,8 @@ const LOCAL_STORAGE_KEY = 'cineScheduleWatchingItems';
 export function WatchingProvider({ children }: { children: ReactNode }) {
   const [watchingItems, setWatchingItems] = useState<WatchingItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedWatchingItem, setSelectedWatchingItem] = useState<WatchingItem | null>(null);
 
   useEffect(() => {
     try {
@@ -76,6 +82,11 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
   
   const deleteWatchingItem = (id: number) => {
     setWatchingItems(prevItems => prevItems.filter(item => item.id !== id));
+    // Also close modal if the deleted item was selected
+    if (selectedWatchingItem?.id === id) {
+      setIsUpdateModalOpen(false);
+      setSelectedWatchingItem(null);
+    }
   };
 
   const contextValue = {
@@ -83,6 +94,10 @@ export function WatchingProvider({ children }: { children: ReactNode }) {
     addWatchingItem,
     updateWatchingItem,
     deleteWatchingItem,
+    isUpdateModalOpen,
+    setIsUpdateModalOpen,
+    selectedWatchingItem,
+    setSelectedWatchingItem,
   };
 
   return (

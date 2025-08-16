@@ -4,6 +4,7 @@ import type { WatchingItem } from '@/lib/watching';
 import { Film, Tv, CheckCircle, ListPlus, PlayCircle } from 'lucide-react';
 import { Progress } from './ui/progress';
 import { Card } from './ui/card';
+import { cn } from '@/lib/utils';
 
 interface WatchingCardProps {
   item: WatchingItem;
@@ -49,7 +50,12 @@ export default function WatchingCard({ item, onClick, layout = 'vertical' }: Wat
   if (layout === 'horizontal') {
     // Horizontal layout for Seen/Watchlist/Watching on the Watching page
     return (
-      <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-card/80 transition-colors w-full">
+      <div 
+        className={cn("flex items-center gap-4 p-2 rounded-lg hover:bg-card/80 transition-colors w-full", onClick && "cursor-pointer")}
+        onClick={onClick}
+        role={onClick ? "button" : undefined}
+        tabIndex={onClick ? 0 : undefined}
+      >
         <div className="relative w-12 h-16 flex-shrink-0 rounded-md overflow-hidden">
           <Image
             src={item.posterUrl}
