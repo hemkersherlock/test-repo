@@ -6,15 +6,18 @@ import EventCard from "@/components/event-card";
 import { useEvents } from "@/context/events-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Event } from "@/lib/events";
-import { Search } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchTMDb, TMDbResult } from "@/lib/tmdb";
 import { debounce } from "lodash";
 import Image from "next/image";
 import SearchResultModal from "@/components/search-result-modal";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const { events, setSelectedEvent, setIsModalOpen } = useEvents();
+  const { toast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<TMDbResult[]>([]);
@@ -53,6 +56,32 @@ export default function Home() {
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
+
+  const handleNotificationClick = async () => {
+    if (!('Notification' in window)) {
+      toast({ title: "Error", description: "This browser does not support desktop notification." });
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      new Notification("You're all set!", {
+        body: "You will receive notifications for upcoming shows.",
+      });
+      toast({ title: "Success!", description: "Notifications are already enabled." });
+    } else if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        new Notification("Notifications Enabled!", {
+          body: "You will now be notified about your scheduled shows.",
+        });
+        toast({ title: "Success!", description: "Notifications have been enabled." });
+      } else {
+        toast({ title: "Info", description: "You have not enabled notifications." });
+      }
+    } else {
+       toast({ title: "Notifications Blocked", description: "Please enable notifications in your browser settings." });
+    }
+  };
   
   const upcomingEvents = events
     .filter(event => new Date(event.dateTime) >= new Date())
@@ -63,7 +92,12 @@ export default function Home() {
       <div className="flex justify-center min-h-full">
         <div className="w-full max-w-lg">
           <header className="p-4 pt-8 sticky top-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col gap-4">
-            <h1 className="text-3xl font-headline font-bold text-center">CineSchedule</h1>
+            <div className="flex justify-between items-center">
+               <h1 className="text-3xl font-headline font-bold text-center">CineSchedule</h1>
+               <Button variant="ghost" size="icon" onClick={handleNotificationClick} aria-label="Enable Notifications">
+                  <Bell className="h-6 w-6" />
+               </Button>
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
