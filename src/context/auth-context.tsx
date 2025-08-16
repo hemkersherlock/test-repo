@@ -10,7 +10,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  signInAnonymously
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
@@ -20,6 +21,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signUpWithEmail: (email: string, pass: string) => Promise<any>;
   signInWithEmail: (email: string, pass: string) => Promise<any>;
+  signInAsGuest: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -46,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push('/');
     } catch (error) {
       console.error("Google sign-in failed:", error);
+      throw error;
     }
   };
 
@@ -71,6 +74,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInAsGuest = async () => {
+    try {
+      await signInAnonymously(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Anonymous sign-in failed:", error);
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
@@ -87,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithGoogle,
     signUpWithEmail,
     signInWithEmail,
+    signInAsGuest,
     signOut,
   };
 
@@ -104,5 +118,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    

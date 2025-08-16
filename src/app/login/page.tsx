@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Clapperboard } from 'lucide-react';
 
 export default function LoginPage() {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsGuest } = useAuth();
   const { toast } = useToast();
 
   const [signInEmail, setSignInEmail] = useState('');
@@ -65,13 +65,27 @@ export default function LoginPage() {
     setLoading(false);
   }
 
+  const handleSkip = async () => {
+    setLoading(true);
+    try {
+      await signInAsGuest();
+    } catch (error: any) {
+      toast({
+        title: "Guest Sign In Failed",
+        description: error.message || "An unknown error occurred.",
+        variant: "destructive"
+      });
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center justify-center mb-6">
           <Clapperboard className="w-12 h-12 text-primary" />
           <h1 className="text-3xl font-headline font-bold mt-2">CineSchedule</h1>
-          <p className="text-muted-foreground">Welcome back! Sign in to your account.</p>
+          <p className="text-muted-foreground">Welcome! Sign in or create an account.</p>
         </div>
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -126,9 +140,12 @@ export default function LoginPage() {
             </Card>
           </TabsContent>
         </Tabs>
+        <div className="mt-4 text-center">
+          <button onClick={handleSkip} className="text-sm text-muted-foreground hover:text-foreground underline" disabled={loading}>
+            {loading ? 'Loading...' : 'Skip for now'}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-
-    
