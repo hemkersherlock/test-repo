@@ -70,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return userCredential;
     } catch (error) {
       console.error("Email sign-in failed:", error);
+      // Re-throw the error so the UI can catch it and display a message
       throw error;
     }
   };
