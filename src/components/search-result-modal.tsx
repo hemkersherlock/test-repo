@@ -26,14 +26,13 @@ interface SearchResultModalProps {
 export default function SearchResultModal({ isOpen, onClose, result }: SearchResultModalProps) {
   const { addItem, setModalOpen, setSelectedItem } = useCine();
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     const newItem = createCineItem('scheduled');
     // We add the item directly here to create the document in Firestore first
-    addItem(newItem).then(() => {
-        setSelectedItem(newItem);
-        onClose(); 
-        setModalOpen(true);
-    });
+    await addItem(newItem);
+    setSelectedItem(newItem);
+    onClose(); 
+    setModalOpen(true);
   };
 
   const handleTrack = () => {
@@ -43,7 +42,7 @@ export default function SearchResultModal({ isOpen, onClose, result }: SearchRes
   };
 
   const handleWatchlist = () => {
-    const newItem = createCineItem('watchlist');
+    const newItem = createCineitem('watchlist');
     addItem(newItem);
     onClose();
   };
