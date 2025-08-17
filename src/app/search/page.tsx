@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import AddShowModal from "@/components/add-show-modal";
-import type { Event } from "@/lib/events";
 import { Button } from "@/components/ui/button";
 
 export default function SearchPage() {
