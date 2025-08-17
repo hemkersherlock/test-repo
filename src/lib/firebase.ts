@@ -14,14 +14,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app: FirebaseApp;
-if (typeof window !== 'undefined') {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-} else {
-  // Mock app for server-side rendering if needed, though not used for auth/db here
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-}
-
+const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
@@ -36,6 +29,5 @@ if (typeof window !== 'undefined') {
       }
     });
 }
-
 
 export { app, db, auth };
