@@ -42,11 +42,14 @@ export default function SearchResultModal({ isOpen, onClose, result }: SearchRes
 
   const handleSchedule = async () => {
     const itemData = createCineItem('scheduled');
-    const newItem = await addItem(itemData); // addItem now returns the full item with ID
+    const newItem = await addItem(itemData);
     if (newItem) {
       setSelectedItem(newItem);
-      onClose(); // Close this modal first
-      setModalOpen(true); // Then open the AddShowModal
+      onClose();
+      // Use a short timeout to ensure the state updates before opening the next modal
+      setTimeout(() => {
+        setModalOpen(true);
+      }, 50);
     } else {
        toast({ title: "Error", description: "Could not create item to schedule.", variant: "destructive" });
     }
