@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getFirestore, enableIndexedDbPersistence, Firestore } from "firebase/firestore";
+import { getAuth, Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,17 +15,20 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app: FirebaseApp;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
+let db: Firestore;
+let auth: Auth;
 
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// Enable offline persistence only on the client
 if (typeof window !== 'undefined') {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
+  }
+  
+  db = getFirestore(app);
+  auth = getAuth(app);
+
+  // Enable offline persistence only on the client
   try {
     enableIndexedDbPersistence(db)
   } catch (err: any) {
@@ -37,4 +40,5 @@ if (typeof window !== 'undefined') {
   }
 }
 
+// Export the initialized services, which will be undefined on the server
 export { app, db, auth };
