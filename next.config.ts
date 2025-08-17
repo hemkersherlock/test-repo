@@ -2,6 +2,10 @@
 import type {NextConfig} from 'next';
 import createPWA from '@ducanh2912/next-pwa';
 
+// Load environment variables from .env file
+require('dotenv').config({ path: './.env' });
+
+
 const withPWA = createPWA({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
