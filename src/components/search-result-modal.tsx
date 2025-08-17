@@ -45,8 +45,8 @@ export default function SearchResultModal({ isOpen, onClose, result }: SearchRes
     const newItem = await addItem(itemData); // addItem now returns the full item with ID
     if (newItem) {
       setSelectedItem(newItem);
-      onClose();
-      setModalOpen(true);
+      onClose(); // Close this modal first
+      setModalOpen(true); // Then open the AddShowModal
     } else {
        toast({ title: "Error", description: "Could not create item to schedule.", variant: "destructive" });
     }

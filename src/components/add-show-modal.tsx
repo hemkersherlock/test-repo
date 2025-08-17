@@ -78,37 +78,35 @@ export default function AddShowModal() {
     setType('movie');
     setSeason('1');
     setEpisode('1');
-    setDate(new Date());
-    setTime(formatDate(new Date(), 'HH:mm'));
+    setDate(undefined);
+    setTime('');
     setNotes('');
     setPosterUrl('');
     setSearchResults([]);
   };
 
   useEffect(() => {
-    if (modalOpen) {
-      if (selectedItem) {
-        const eventDate = selectedItem.scheduleDate ? new Date(selectedItem.scheduleDate) : new Date();
-        
-        setTitle(selectedItem.title || '');
-        setSearchQuery(selectedItem.title || '');
-        setPosterUrl(selectedItem.posterUrl || 'https://placehold.co/200x300.png');
-        setType(selectedItem.type);
-        
-        if (selectedItem.type === 'show' && selectedItem.progress) {
-          setSeason(String(selectedItem.progress.season));
-          setEpisode(String(selectedItem.progress.episode));
-        } else {
-            setSeason('1');
-            setEpisode('1');
-        }
-
-        setDate(eventDate);
-        setTime(formatDate(eventDate, 'HH:mm'));
-        setNotes(selectedItem.notes || '');
+    if (modalOpen && selectedItem) {
+      const eventDate = selectedItem.scheduleDate ? new Date(selectedItem.scheduleDate) : new Date();
+      
+      setTitle(selectedItem.title || '');
+      setSearchQuery(selectedItem.title || '');
+      setPosterUrl(selectedItem.posterUrl || 'https://placehold.co/200x300.png');
+      setType(selectedItem.type);
+      
+      if (selectedItem.type === 'show' && selectedItem.progress) {
+        setSeason(String(selectedItem.progress.season));
+        setEpisode(String(selectedItem.progress.episode));
       } else {
-        resetForm();
+          setSeason('1');
+          setEpisode('1');
       }
+
+      setDate(eventDate);
+      setTime(formatDate(eventDate, 'HH:mm'));
+      setNotes(selectedItem.notes || '');
+    } else {
+      resetForm();
     }
   }, [selectedItem, modalOpen]);
 
@@ -150,6 +148,7 @@ export default function AddShowModal() {
   const handleClose = () => {
     setModalOpen(false);
     setSelectedItem(null);
+    resetForm();
   };
 
   return (
