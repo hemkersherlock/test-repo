@@ -14,20 +14,27 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+let app: FirebaseApp;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
+}
+
 const db = getFirestore(app);
 const auth = getAuth(app);
 
 // Enable offline persistence only on the client
 if (typeof window !== 'undefined') {
-  enableIndexedDbPersistence(db)
-    .catch((err) => {
-      if (err.code == 'failed-precondition') {
-        console.warn("Firestore offline persistence failed: Multiple tabs open.");
-      } else if (err.code == 'unimplemented') {
-        console.warn("Firestore offline persistence failed: Browser does not support it.");
-      }
-    });
+  try {
+    enableIndexedDbPersistence(db)
+  } catch (err: any) {
+    if (err.code == 'failed-precondition') {
+      console.warn("Firestore offline persistence failed: Multiple tabs open.");
+    } else if (err.code == 'unimplemented') {
+      console.warn("Firestore offline persistence failed: Browser does not support it.");
+    }
+  }
 }
 
 export { app, db, auth };

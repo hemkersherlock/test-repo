@@ -8,12 +8,7 @@ const withPWA = createPWA({
 });
 
 const nextConfig: NextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {
