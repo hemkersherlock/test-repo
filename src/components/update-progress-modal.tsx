@@ -137,7 +137,7 @@ export default function UpdateProgressModal() {
           )}
         </div>
         
-        <DialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
+        <DialogFooter className="flex-col gap-2 sm-flex-col sm:space-x-0">
           <Button onClick={handleSave}>Update</Button>
           <Button onClick={handleSchedule} variant="secondary">Schedule It</Button>
         </DialogFooter>
