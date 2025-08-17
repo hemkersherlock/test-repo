@@ -28,6 +28,7 @@ import type { CineItem } from "@/lib/types";
 
 export default function AddShowModal() {
   const { 
+    addItem,
     updateItem,
     modalOpen,
     setModalOpen,
@@ -40,15 +41,18 @@ export default function AddShowModal() {
   const [type, setType] = useState<'movie' | 'show'>('movie');
   const [season, setSeason] = useState('1');
   const [episode, setEpisode] = useState('1');
-  const [date, setDate] = useState<Date | undefined>();
-  const [time, setTime] = useState('');
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [time, setTime] = useState(formatDate(new Date(), 'HH:mm'));
   const [notes, setNotes] = useState('');
   const [posterUrl, setPosterUrl] = useState('');
+  const [tmdbId, setTmdbId] = useState('');
+
 
   const [searchResults, setSearchResults] = useState<TMDbResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
-  const isEditMode = !!selectedItem;
+  // An item is in "edit mode" if it has a firestore `id` property.
+  const isEditMode = !!(selectedItem && 'id' in selectedItem && selectedItem.id);
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
@@ -78,21 +82,25 @@ export default function AddShowModal() {
     setType('movie');
     setSeason('1');
     setEpisode('1');
-    setDate(undefined);
-    setTime('');
+    setDate(new Date());
+    setTime(formatDate(new Date(), 'HH:mm'));
     setNotes('');
     setPosterUrl('');
+    setTmdbId('');
     setSearchResults([]);
   };
 
   useEffect(() => {
     if (modalOpen && selectedItem) {
+      // If it's an existing item from DB, it will have a scheduleDate
+      // Otherwise, it's a new item, so default to now.
       const eventDate = selectedItem.scheduleDate ? new Date(selectedItem.scheduleDate) : new Date();
       
       setTitle(selectedItem.title || '');
       setSearchQuery(selectedItem.title || '');
       setPosterUrl(selectedItem.posterUrl || 'https://placehold.co/200x300.png');
       setType(selectedItem.type);
+      setTmdbId(selectedItem.tmdbId || '');
       
       if (selectedItem.type === 'show' && selectedItem.progress) {
         setSeason(String(selectedItem.progress.season));
@@ -117,11 +125,12 @@ export default function AddShowModal() {
     setSearchQuery(resultTitle);
     setPosterUrl(result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}`: 'https://placehold.co/200x300.png');
     setType(isShow ? 'show' : 'movie');
+    setTmdbId(String(result.id));
     setSearchResults([]);
   };
 
   const handleSubmit = () => {
-    if (!title || !date || !time || !selectedItem) {
+    if (!title || !date || !time) {
       // Basic validation
       alert("Please fill in all required fields.");
       return;
@@ -131,17 +140,23 @@ export default function AddShowModal() {
     const combinedDateTime = new Date(date);
     combinedDateTime.setHours(hours, minutes);
 
-    const itemData: Partial<CineItem> = {
+    const itemData: Omit<CineItem, 'id' | 'createdAt'> = {
+      tmdbId,
       title,
       posterUrl: posterUrl || 'https://placehold.co/200x300.png',
       scheduleDate: combinedDateTime.toISOString(),
       notes,
       type,
       status: 'scheduled',
-      ...(type === 'show' && { progress: { season: parseInt(season), episode: parseInt(episode) } }),
+      ...(type === 'show' && { progress: { season: parseInt(season), episode: parseInt(episode), current: 0 } }),
     };
 
-    updateItem(selectedItem.id, itemData);
+    if (isEditMode && selectedItem?.id) {
+      updateItem(selectedItem.id, itemData);
+    } else {
+      addItem(itemData);
+    }
+
     handleClose();
   };
   

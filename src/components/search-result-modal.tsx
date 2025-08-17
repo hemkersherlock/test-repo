@@ -40,19 +40,28 @@ export default function SearchResultModal({ isOpen, onClose, result }: SearchRes
     };
   };
 
-  const handleSchedule = async () => {
-    const itemData = createCineItem('scheduled');
-    const newItem = await addItem(itemData);
-    if (newItem) {
-      setSelectedItem(newItem);
-      onClose();
-      // Use a short timeout to ensure the state updates before opening the next modal
-      setTimeout(() => {
-        setModalOpen(true);
-      }, 50);
-    } else {
-       toast({ title: "Error", description: "Could not create item to schedule.", variant: "destructive" });
-    }
+  const handleSchedule = () => {
+    const isShow = result.media_type === 'tv';
+    // Create a temporary item object without an ID.
+    // This will be used to pre-fill the AddShowModal.
+    const itemToSchedule: Omit<CineItem, 'id' | 'createdAt'> = {
+      tmdbId: String(result.id),
+      title: result.title || result.name,
+      posterUrl: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : 'https://placehold.co/200x300.png',
+      type: isShow ? 'show' : 'movie',
+      status: 'scheduled', // default status
+      ...(isShow && { progress: { season: 1, episode: 1, current: 0 } }),
+    };
+    
+    // Set this temporary item as the selected item
+    setSelectedItem(itemToSchedule as CineItem);
+    
+    // Close this modal and open the scheduling modal
+    onClose();
+    // Use a short timeout to ensure the state updates before opening the next modal
+    setTimeout(() => {
+      setModalOpen(true);
+    }, 50);
   };
 
   const handleTrack = async () => {
