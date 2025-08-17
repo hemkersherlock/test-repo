@@ -1,5 +1,5 @@
 
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
@@ -14,11 +14,18 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app: FirebaseApp;
+if (typeof window !== 'undefined') {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+} else {
+  // Mock app for server-side rendering if needed, though not used for auth/db here
+  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+}
+
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Enable offline persistence
+// Enable offline persistence only on the client
 if (typeof window !== 'undefined') {
   enableIndexedDbPersistence(db)
     .catch((err) => {
