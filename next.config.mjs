@@ -1,9 +1,12 @@
-/** @type {import('next').NextConfig} */
-
-const createPWA = require('@ducanh2912/next-pwa').default;
+/**
+ * @type {import('next').NextConfig}
+ */
+import createPWA from '@ducanh2912/next-pwa';
 
 const withPWA = createPWA({
   dest: 'public',
+  register: true,
+  skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
 });
 
@@ -13,18 +16,14 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
+        hostname: 'image.tmdb.org',
       },
       {
         protocol: 'https',
-        hostname: 'image.tmdb.org',
-        port: '',
-        pathname: '/**',
+        hostname: 'placehold.co',
       },
     ],
   },
 };
 
-module.exports = withPWA(nextConfig);
+export default withPWA(nextConfig);
