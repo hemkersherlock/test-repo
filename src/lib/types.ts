@@ -2,7 +2,8 @@
 export type Status = 'watchlist' | 'scheduled' | 'watching' | 'completed';
 
 export interface CineItem {
-  id: string; // Using string to accommodate TMDb IDs which can be large numbers
+  id: string; // Firestore document ID
+  tmdbId: string; // The original ID from TMDb
   title: string;
   type: 'show' | 'movie';
   status: Status;

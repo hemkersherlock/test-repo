@@ -16,6 +16,7 @@ import { useCine } from "@/context/cine-context";
 import { ScrollArea } from "./ui/scroll-area";
 import type { CineItem } from "@/lib/types";
 import { Timestamp } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 interface SearchResultModalProps {
   isOpen: boolean;
@@ -25,6 +26,24 @@ interface SearchResultModalProps {
 
 export default function SearchResultModal({ isOpen, onClose, result }: SearchResultModalProps) {
   const { addItem, setModalOpen, setSelectedItem } = useCine();
+  const { toast } = useToast();
+
+  const createCineItem = (status: CineItem['status']): CineItem => {
+    const isShow = result.media_type === 'tv';
+    // Generate a unique ID for the new item for Firestore
+    const newId = `${result.id}-${new Date().getTime()}`;
+    return {
+      id: newId,
+      tmdbId: String(result.id),
+      title: result.title || result.name,
+      posterUrl: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : 'https://placehold.co/200x300.png',
+      type: isShow ? 'show' : 'movie',
+      status: status,
+      createdAt: Timestamp.now().toMillis().toString(),
+      ...(status === 'scheduled' && { scheduleDate: new Date().toISOString() }),
+      ...(isShow && { progress: { season: 1, episode: 1, current: 0 } }),
+    };
+  };
 
   const handleSchedule = async () => {
     const newItem = createCineItem('scheduled');
@@ -38,29 +57,17 @@ export default function SearchResultModal({ isOpen, onClose, result }: SearchRes
   const handleTrack = () => {
     const newItem = createCineItem('watching');
     addItem(newItem);
+    toast({ title: "Added to Watching", description: `${newItem.title} is now being tracked.` });
     onClose();
   };
 
   const handleWatchlist = () => {
-    const newItem = createCineitem('watchlist');
+    const newItem = createCineItem('watchlist');
     addItem(newItem);
+    toast({ title: "Added to Watchlist", description: `${newItem.title} has been added to your watchlist.` });
     onClose();
   };
   
-  const createCineItem = (status: CineItem['status']): CineItem => {
-    const isShow = result.media_type === 'tv';
-    return {
-      id: String(result.id),
-      title: result.title || result.name,
-      posterUrl: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : 'https://placehold.co/200x300.png',
-      type: isShow ? 'show' : 'movie',
-      status: status,
-      createdAt: Timestamp.now().toMillis().toString(),
-      ...(status === 'scheduled' && { scheduleDate: new Date().toISOString() }),
-      ...(isShow && { progress: { season: 1, episode: 1, current: 0 } }),
-    };
-  };
-
   const year = result.release_date?.substring(0, 4) || result.first_air_date?.substring(0, 4) || 'N/A';
 
   return (

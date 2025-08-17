@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, Timestamp, query, where } from 'firebase/firestore';
 import type { CineItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from './auth-context';
@@ -65,6 +65,7 @@ export function CineProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (!item.id) {
+      console.error("Attempted to add an item without a generated ID.");
       toast({ title: "Error", description: "Cannot add an item without an ID.", variant: "destructive" });
       return;
     }
@@ -72,6 +73,7 @@ export function CineProvider({ children }: { children: ReactNode }) {
     const newItem: CineItem = {
       ...item,
       id: item.id,
+      tmdbId: item.tmdbId || 'unknown',
       title: item.title || 'Untitled',
       type: item.type || 'movie',
       status: item.status || 'watchlist',
@@ -80,8 +82,9 @@ export function CineProvider({ children }: { children: ReactNode }) {
     };
 
     try {
-      await setDoc(doc(db, USERS_COLLECTION, user.uid, COLLECTION_NAME, newItem.id), newItem, { merge: true });
-      toast({ title: "Success", description: `${newItem.title} has been added.` });
+      // Use the generated unique ID to create the document reference
+      await setDoc(doc(db, USERS_COLLECTION, user.uid, COLLECTION_NAME, newItem.id), newItem);
+      // No toast here as it's handled in the component for better context
     } catch (error) {
       console.error("Error adding document: ", error);
       toast({ title: "Error", description: "Could not add the item.", variant: "destructive" });
