@@ -1,13 +1,13 @@
+/** @type {import('next').NextConfig} */
 
-import type {NextConfig} from 'next';
-import createPWA from '@ducanh2912/next-pwa';
+const createPWA = require('@ducanh2912/next-pwa').default;
 
 const withPWA = createPWA({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
 });
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -27,4 +27,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+module.exports = withPWA(nextConfig);
