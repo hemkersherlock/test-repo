@@ -11,11 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { TMDbResult } from "@/lib/tmdb";
+import type { TMDbResult } from "@/lib/tmdb";
 import { useCine } from "@/context/cine-context";
 import { ScrollArea } from "./ui/scroll-area";
 import type { CineItem } from "@/lib/types";
-import { Timestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 interface SearchResultModalProps {
@@ -28,43 +27,42 @@ export default function SearchResultModal({ isOpen, onClose, result }: SearchRes
   const { addItem, setModalOpen, setSelectedItem } = useCine();
   const { toast } = useToast();
 
-  const createCineItem = (status: CineItem['status']): CineItem => {
+  const createCineItem = (status: CineItem['status']): Omit<CineItem, 'id' | 'createdAt'> => {
     const isShow = result.media_type === 'tv';
-    // Generate a unique ID for the new item for Firestore
-    const newId = `${result.id}-${new Date().getTime()}`;
     return {
-      id: newId,
       tmdbId: String(result.id),
       title: result.title || result.name,
       posterUrl: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : 'https://placehold.co/200x300.png',
       type: isShow ? 'show' : 'movie',
       status: status,
-      createdAt: Timestamp.now().toMillis().toString(),
       ...(status === 'scheduled' && { scheduleDate: new Date().toISOString() }),
       ...(isShow && { progress: { season: 1, episode: 1, current: 0 } }),
     };
   };
 
   const handleSchedule = async () => {
-    const newItem = createCineItem('scheduled');
-    // We add the item directly here to create the document in Firestore first
-    await addItem(newItem);
-    setSelectedItem(newItem);
-    onClose(); 
-    setModalOpen(true);
+    const itemData = createCineItem('scheduled');
+    const newItem = await addItem(itemData); // addItem now returns the full item with ID
+    if (newItem) {
+      setSelectedItem(newItem);
+      onClose();
+      setModalOpen(true);
+    } else {
+       toast({ title: "Error", description: "Could not create item to schedule.", variant: "destructive" });
+    }
   };
 
-  const handleTrack = () => {
-    const newItem = createCineItem('watching');
-    addItem(newItem);
-    toast({ title: "Added to Watching", description: `${newItem.title} is now being tracked.` });
+  const handleTrack = async () => {
+    const itemData = createCineItem('watching');
+    await addItem(itemData);
+    toast({ title: "Added to Watching", description: `${itemData.title} is now being tracked.` });
     onClose();
   };
 
-  const handleWatchlist = () => {
-    const newItem = createCineItem('watchlist');
-    addItem(newItem);
-    toast({ title: "Added to Watchlist", description: `${newItem.title} has been added to your watchlist.` });
+  const handleWatchlist = async () => {
+    const itemData = createCineItem('watchlist');
+    await addItem(itemData);
+    toast({ title: "Added to Watchlist", description: `${itemData.title} has been added to your watchlist.` });
     onClose();
   };
   

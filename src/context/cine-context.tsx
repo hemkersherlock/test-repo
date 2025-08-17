@@ -3,14 +3,14 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, Timestamp, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, Timestamp, query, where, addDoc } from 'firebase/firestore';
 import type { CineItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from './auth-context';
 
 interface CineContextType {
   items: CineItem[];
-  addItem: (item: Partial<CineItem>) => Promise<void>;
+  addItem: (item: Omit<CineItem, 'id' | 'createdAt'>) => Promise<CineItem | null>;
   updateItem: (id: string, data: Partial<CineItem>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   modalOpen: boolean;
@@ -47,7 +47,7 @@ export function CineProvider({ children }: { children: ReactNode }) {
     
     const unsubscribe = onSnapshot(userMediaCollection, 
       (snapshot) => {
-        const data = snapshot.docs.map(doc => ({ ...doc.data() } as CineItem));
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CineItem));
         setItems(data);
       },
       (error) => {
@@ -59,37 +59,27 @@ export function CineProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [user, toast]);
 
-  const addItem = async (item: Partial<CineItem>) => {
+  const addItem = async (item: Omit<CineItem, 'id' | 'createdAt'>): Promise<CineItem | null> => {
     if (!user) {
       toast({ title: "Error", description: "You must be logged in to add items.", variant: "destructive" });
-      return;
+      return null;
     }
-    if (!item.id) {
-      console.error("Attempted to add an item without a generated ID.");
-      toast({ title: "Error", description: "Cannot add an item without an ID.", variant: "destructive" });
-      return;
-    }
-
-    const newItem: CineItem = {
-      ...item,
-      id: item.id,
-      tmdbId: item.tmdbId || 'unknown',
-      title: item.title || 'Untitled',
-      type: item.type || 'movie',
-      status: item.status || 'watchlist',
-      posterUrl: item.posterUrl || '',
-      createdAt: Timestamp.now().toMillis().toString(),
-    };
 
     try {
-      // Use the generated unique ID to create the document reference
-      await setDoc(doc(db, USERS_COLLECTION, user.uid, COLLECTION_NAME, newItem.id), newItem);
-      // No toast here as it's handled in the component for better context
+      const userMediaCollection = collection(db, USERS_COLLECTION, user.uid, COLLECTION_NAME);
+      const newItemData = {
+        ...item,
+        createdAt: Timestamp.now().toMillis().toString(),
+      };
+      const docRef = await addDoc(userMediaCollection, newItemData);
+      return { id: docRef.id, ...newItemData };
     } catch (error) {
       console.error("Error adding document: ", error);
       toast({ title: "Error", description: "Could not add the item.", variant: "destructive" });
+      return null;
     }
   };
+
 
   const updateItem = async (id: string, data: Partial<CineItem>) => {
      if (!user) {
