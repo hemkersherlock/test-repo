@@ -3,10 +3,9 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, writeBatch, Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import type { CineItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { mockCineData } from '@/lib/mock-data';
 import { useAuth } from './auth-context';
 
 interface CineContextType {
@@ -95,9 +94,11 @@ export function CineProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      await updateDoc(doc(db, USERS_COLLECTION, user.uid, COLLECTION_NAME, id), data);
+      const itemRef = doc(db, USERS_COLLECTION, user.uid, COLLECTION_NAME, id);
+      await updateDoc(itemRef, data);
       toast({ title: "Updated", description: "Item has been updated successfully." });
-    } catch (error) {
+    } catch (error)
+ {
       console.error("Error updating document: ", error);
       toast({ title: "Error", description: "Could not update the item.", variant: "destructive" });
     }
