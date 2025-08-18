@@ -38,6 +38,10 @@ export function CineProvider({ children }: { children: ReactNode }) {
   const [fabAction, setFabAction] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     const db = getFirebaseDb();
     if (!user || !db) {
       setItems([]);

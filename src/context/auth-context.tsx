@@ -35,17 +35,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<Auth | null>(null);
 
   useEffect(() => {
-    const authInstance = getFirebaseAuth();
-    setAuth(authInstance);
+    // Only get the auth instance on the client-side
+    if (typeof window !== 'undefined') {
+      const authInstance = getFirebaseAuth();
+      setAuth(authInstance);
 
-    if (authInstance) {
-      const unsubscribe = onAuthStateChanged(authInstance, (currentUser) => {
-        setUser(currentUser);
+      if (authInstance) {
+        const unsubscribe = onAuthStateChanged(authInstance, (currentUser) => {
+          setUser(currentUser);
+          setLoading(false);
+        });
+        return () => unsubscribe();
+      } else {
         setLoading(false);
-      });
-      return () => unsubscribe();
+      }
     } else {
-      // Not in a browser environment
+      // On the server, we're not doing anything with auth
       setLoading(false);
     }
   }, []);
