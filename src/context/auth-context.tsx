@@ -2,7 +2,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { 
   onAuthStateChanged, 
   User,
@@ -11,7 +11,8 @@ import {
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInAnonymously
+  signInAnonymously,
+  Auth
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
@@ -31,17 +32,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [auth, setAuth] = useState<Auth | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
+    const authInstance = getFirebaseAuth();
+    setAuth(authInstance);
 
-    return () => unsubscribe();
+    if (authInstance) {
+      const unsubscribe = onAuthStateChanged(authInstance, (currentUser) => {
+        setUser(currentUser);
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      // Not in a browser environment
+      setLoading(false);
+    }
   }, []);
   
   const signInWithGoogle = async () => {
+    if (!auth) return;
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -53,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUpWithEmail = async (email: string, pass: string) => {
+    if (!auth) return;
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
       router.push('/');
@@ -64,7 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   
   const signInWithEmail = async (email: string, pass: string) => {
-     try {
+    if (!auth) return;
+    try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
       router.push('/');
       return userCredential;
@@ -76,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInAsGuest = async () => {
+    if (!auth) return;
     try {
       // This logic ensures we only sign in anonymously if there's no current user.
       if (!auth.currentUser) {
@@ -89,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!auth) return;
     try {
       await firebaseSignOut(auth);
       router.push('/login');

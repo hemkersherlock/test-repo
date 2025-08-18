@@ -2,7 +2,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
-import { db } from '@/lib/firebase';
+import { getFirebaseDb } from '@/lib/firebase';
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, Timestamp, query, where, addDoc } from 'firebase/firestore';
 import type { CineItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +38,8 @@ export function CineProvider({ children }: { children: ReactNode }) {
   const [fabAction, setFabAction] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    const db = getFirebaseDb();
+    if (!user || !db) {
       setItems([]);
       return;
     }
@@ -60,7 +61,8 @@ export function CineProvider({ children }: { children: ReactNode }) {
   }, [user, toast]);
 
   const addItem = async (item: Omit<CineItem, 'id' | 'createdAt'>): Promise<CineItem | null> => {
-    if (!user) {
+    const db = getFirebaseDb();
+    if (!user || !db) {
       toast({ title: "Error", description: "You must be logged in to add items.", variant: "destructive" });
       return null;
     }
@@ -82,7 +84,8 @@ export function CineProvider({ children }: { children: ReactNode }) {
 
 
   const updateItem = async (id: string, data: Partial<CineItem>) => {
-     if (!user) {
+    const db = getFirebaseDb();
+    if (!user || !db) {
       toast({ title: "Error", description: "You must be logged in to update items.", variant: "destructive" });
       return;
     }
@@ -98,7 +101,8 @@ export function CineProvider({ children }: { children: ReactNode }) {
   };
   
   const deleteItem = async (id: string) => {
-     if (!user) {
+    const db = getFirebaseDb();
+    if (!user || !db) {
       toast({ title: "Error", description: "You must be logged in to delete items.", variant: "destructive" });
       return;
     }
