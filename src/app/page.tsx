@@ -127,7 +127,8 @@ export default function Home() {
   
   return (
     <>
-      <div ref={pageTopRef} className="flex justify-center min-h-full">
+      <div ref={pageTopRef} />
+      <div className="flex justify-center min-h-full">
         <div className="w-full max-w-lg">
           <header className="p-4 pt-8 sticky top-0 bg-background/80 backdrop-blur-sm z-20 flex flex-col gap-4">
             <div className="flex justify-between items-center">

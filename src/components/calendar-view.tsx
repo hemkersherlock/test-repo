@@ -25,10 +25,8 @@ export default function CalendarView() {
   
   useEffect(() => {
     // Set initial date only on the client to avoid hydration mismatch
-    if (!date) {
-      setDate(new Date());
-    }
-  }, [date]);
+    setDate(new Date());
+  }, []);
   
   const eventsByDate = useMemo(() => {
     const map = new Map<number, CineItem[]>();
@@ -141,3 +139,5 @@ export default function CalendarView() {
     </>
   );
 }
+
+    
